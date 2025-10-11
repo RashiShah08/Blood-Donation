@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Eligibility Form - BloodConnect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ea2a33;
+            --secondary-color: #f4f0f0;
+            --text-primary: #181111;
+            --text-secondary: #575353;
+            --accent-blue: #3b82f6;
+            --success-green: #10b981;
+            --warning-orange: #f59e0b;
+            --error-red: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-blue));
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .form-container {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(234, 42, 51, 0.1);
+        }
+
+        .question-group {
+            margin-bottom: 2.5rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+            border-radius: 15px;
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .question-group:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .question {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            background: white;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .radio-option:hover {
+            border-color: var(--primary-color);
+            background: rgba(234, 42, 51, 0.05);
+        }
+
+        .radio-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            margin: 0;
+            cursor: pointer;
+            accent-color: var(--primary-color);
+        }
+
+        .radio-option.selected {
+            border-color: var(--primary-color);
+            background: rgba(234, 42, 51, 0.1);
+            color: var(--primary-color);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #d91f28 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(234, 42, 51, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(234, 42, 51, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: var(--text-secondary);
+            border: 2px solid #e9ecef;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+            transform: translateY(-1px);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+        }
+
+        .modal-icon.success {
+            background: linear-gradient(135deg, var(--success-green) 0%, #059669 100%);
+            color: white;
+        }
+
+        .modal-icon.error {
+            background: linear-gradient(135deg, var(--error-red) 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .modal h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .modal p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            margin: 2rem 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-blue));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .question-counter {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .form-container {
+                padding: 2rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .radio-group {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+            
+            .radio-option {
+                justify-content: center;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header fade-in">
+            <h1>🩸 Donor Eligibility Form</h1>
+            <p>Please answer all questions honestly to ensure safe blood donation</p>
+        </div>
+
+        <div class="form-container fade-in">
+            <div class="question-counter">
+                <span id="current-question">0</span> of <span id="total-questions">11</span> questions answered
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+
+            <form id="eligibilityForm">
+                <div class="question-group">
+                    <div class="question">
+                        Have you had a cold, cough, fever, taken antibiotics, tetanus vaccination, or COVID-19 vaccine in the past 15 days?
+                    </div>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="q1" value="yes" required>
+                            <span>Yes</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="q1" value="no" required>
+                            <span>No</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="question-group">
+                    <div class="question">
+                        Have you traveled outside India or received vaccinations for yellow fever, measles, or mumps in the past 1 month?
+                    </div>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="q2" value="yes" required>
+                            <span>Yes</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="q2" value="no" required>
+                            <span>No</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="question-group">
+                    <div class="question">
+                        Do you currently have or recently had oral polio, typhoid, or cholera?
+                    </div>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="q3" value="yes" required>
+                            <span>Yes</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="q3" value="no" required>
+                            <span>No</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="question-group">
+                    <div class="question">
+                        Have you had a history of malaria in the past 3 months?
+                    </div>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="q4" value="yes" required>
+                            <span>Yes</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="q4" value="no" required>
+                            <span>No</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="question-group">
+                    <div class="question">
+                        Have you had a history of dengue, chikungunya, minor surgery, abortion, or dental extraction in the past 6 months?
+                    </div>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="q5" value="yes" required>
+                            <span>Yes</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="q5" value="no" required>
+                            <span>No</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="question-group">
+                    <div class="question">
+                        Have you had any major surgery, tattoo, body piercing, typhoid, or animal bite followed by anti-rabies immunoglobulin in the past 1 year?
+                    </div>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="q6" value="yes" required>
+                            <span>Yes</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="q6" value="no" required>
+                            <span>No</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="question-group">
+                    <div class="question">
+                        Have you received Hepatitis B immunoglobulin, blood transfusion, or suffered from jaundice (due to hepatitis A & E) in the past 1 year?
+                    </div>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="q7" value="yes" required>
+                            <span>Yes</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="q7" value="no" required>
+                            <span>No</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="question-group">
+                    <div class="question">
+                        Have you had a history of tuberculosis (TB) in the past 2 years?
+                    </div>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="q8" value="yes" required>
+                            <span>Yes</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="q8" value="no" required>
+                            <span>No</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="question-group">
+                    <div class="question">
+                        Do you currently have or have you ever been diagnosed with cancer, heart disease, chronic kidney disease, chronic liver disease, epilepsy, abnormal bleeding disorder, leprosy, kala azar, unexplained weight loss, schizophrenia, diabetes requiring insulin therapy, HIV infection, Hepatitis B & C infection, jaundice of unknown cause, or endocrine disorders?
+                    </div>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="q9" value="yes" required>
+                            <span>Yes</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="q9" value="no" required>
+                            <span>No</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="question-group">
+                    <div class="question">
+                        Are you currently menstruating, in the lactation period, or within 1 year of baby delivery (if female)?
+                    </div>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="q10" value="yes" required>
+                            <span>Yes</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="q10" value="no" required>
+                            <span>No</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="question-group">
+                    <div class="question">
+                        Are you aware that the minimum interval between blood donations is 3 months for males and 4 months for females?
+                    </div>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="q11" value="yes" required>
+                            <span>Yes</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="q11" value="no" required>
+                            <span>No</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="window.history.back()">
+                        ← Back to Dashboard
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Check Eligibility →
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="resultModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-icon" id="modalIcon">
+                <span id="modalEmoji"></span>
+            </div>
+            <h2 id="modalTitle"></h2>
+            <p id="modalMessage"></p>
+            <button class="btn btn-primary" id="modalButton" onclick="closeModal()">
+                Got it
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Track progress
+        function updateProgress() {
+            const totalQuestions = 11;
+            const answeredQuestions = document.querySelectorAll('input[type="radio"]:checked').length;
+            const progressPercent = (answeredQuestions / totalQuestions) * 100;
+            
+            document.getElementById('current-question').textContent = answeredQuestions;
+            document.getElementById('progress-fill').style.width = progressPercent + '%';
+        }
+
+        // Add event listeners for radio buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const radioButtons = document.querySelectorAll('input[type="radio"]');
+            const totalQuestions = document.querySelectorAll('.question-group').length;
+            
+            document.getElementById('total-questions').textContent = totalQuestions;
+            
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    updateProgress();
+                    
+                    // Update visual selection
+                    const radioOptions = document.querySelectorAll(`input[name="${this.name}"]`);
+                    radioOptions.forEach(option => {
+                        option.closest('.radio-option').classList.remove('selected');
+                    });
+                    this.closest('.radio-option').classList.add('selected');
+                });
+            });
+
+            // Form submission
+            document.getElementById('eligibilityForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                checkEligibility();
+            });
+        });
+
+        function checkEligibility() {
+            const formData = new FormData(document.getElementById('eligibilityForm'));
+            let hasYesAnswer = false;
+            
+            // Check if any answer is "yes" (except for the last question about awareness)
+            for (let i = 1; i <= 10; i++) {
+                if (formData.get(`q${i}`) === 'yes') {
+                    hasYesAnswer = true;
+                    break;
+                }
+            }
+            
+            // Check if the last question (awareness) is answered "no"
+            const awarenessAnswer = formData.get('q11');
+            if (awarenessAnswer === 'no') {
+                hasYesAnswer = true;
+            }
+            
+            showResult(!hasYesAnswer);
+        }
+
+        function showResult(isEligible) {
+            const modal = document.getElementById('resultModal');
+            const modalIcon = document.getElementById('modalIcon');
+            const modalEmoji = document.getElementById('modalEmoji');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
+            const modalButton = document.getElementById('modalButton');
+            
+            if (isEligible) {
+                modalIcon.className = 'modal-icon success';
+                modalEmoji.textContent = '✅';
+                modalTitle.textContent = 'Congratulations!';
+                modalMessage.textContent = 'You are eligible to donate blood. Thank you for your willingness to save lives!';
+                modalButton.textContent = 'Proceed to Location';
+                modalButton.onclick = function() {
+                    window.location.href = 'map.html';
+                };
+            } else {
+                modalIcon.className = 'modal-icon error';
+                modalEmoji.textContent = '❌';
+                modalTitle.textContent = 'Not Eligible';
+                modalMessage.textContent = 'Based on your responses, you are currently not eligible to donate blood. Please consult with a healthcare provider for more information.';
+                modalButton.textContent = 'Back to Dashboard';
+                modalButton.onclick = function() {
+                    closeModal();
+                    setTimeout(() => {
+                        window.history.back();
+                    }, 300);
+                };
+            }
+            
+            modal.style.display = 'block';
+            setTimeout(() => {
+                modal.style.opacity = '1';
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('resultModal');
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('resultModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Add smooth scrolling for better UX
+        document.querySelectorAll('.question-group').forEach((group, index) => {
+            setTimeout(() => {
+                group.classList.add('fade-in');
+            }, index * 100);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>About BloodConnect</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#ea2a33",
+            "background-light": "#f8f6f6",
+            "background-dark": "#211111",
+          },
+          fontFamily: {
+            "display": ["Inter"]
+          },
+          borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings:
+      'FILL' 0,
+      'wght' 400,
+      'GRAD' 0,
+      'opsz' 24
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-800 dark:text-gray-200">
+<div class="flex flex-col min-h-screen">
+<header class="bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800">
+<nav class="container mx-auto px-6 py-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="text-primary">
+<svg fill="none" height="24" viewBox="0 0 48 48" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z" fill="currentColor"></path>
+</svg>
+</div>
+<h1 class="text-xl font-bold text-gray-900 dark:text-white">BloodConnect</h1>
+</div>
+<div class="hidden md:flex items-center space-x-8">
+<a class="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors" href="#">Home</a>
+<a class="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors" href="#">Search</a>
+<a class="text-primary font-medium" href="#">About</a>
+<a class="text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors" href="#">Contact</a>
+</div>
+<div class="flex items-center gap-4">
+<button class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-opacity-90 transition-colors">
+              Donate Blood
+            </button>
+<div class="w-10 h-10 rounded-full bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDyVP6NanDim9K1URCKhm1FXdwpm6YSIs0Ewj52ecNMQZX2Ij9I2FtICZ0jFHsKKkOxDo71FOs8x8ulYAKyla_FxCWLgrNBH6uLsiJkHYsOqibThUZbPr93dVGl8QFpji8UETYy5TEVNhxfpQsk-96JrqfIgIg9z6gX8u-01cjwCuQvOCrM_fBejZfu16rnJgPs8sXmk1jZbxKAjiemX-KHIKaqi488Di6sNZcLllI71A42Moh3mjTgnPZuTVMpHkn8N48dz5d0Gamx");'></div>
+</div>
+</div>
+</nav>
+</header>
+<main class="flex-grow container mx-auto px-6 py-12">
+<div class="max-w-4xl mx-auto">
+<h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">About BloodConnect</h1>
+<p class="text-lg text-gray-700 dark:text-gray-300 mb-10">
+          BloodConnect is a real-time blood donation application designed to connect donors and recipients directly, ensuring timely access to life-saving blood. Our mission is to streamline the blood donation process, making it more efficient and accessible for everyone.
+        </p>
+<div class="space-y-12">
+<div>
+<h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">Our Mission</h2>
+<p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+              To bridge the gap between blood donors and recipients, providing a platform for real-time blood requests and donations. We aim to create a community of active donors and ensure that no one suffers due to a lack of blood.
+            </p>
+</div>
+<div>
+<h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">Our Vision</h2>
+<p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+              To become the leading platform for blood donation, recognized for its reliability, efficiency, and impact on saving lives. We envision a world where blood is readily available to those in need, thanks to a connected and responsive network of donors.
+            </p>
+</div>
+<div>
+<h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-4">The Team</h2>
+<p class="text-gray-700 dark:text-gray-300 leading-relaxed">
+              BloodConnect is powered by a dedicated team of healthcare professionals, technology experts, and passionate volunteers. We are committed to leveraging technology to improve healthcare outcomes and make a positive impact on society.
+            </p>
+</div>
+</div>
+</div>
+</main>
+<footer class="bg-background-light dark:bg-background-dark border-t border-gray-200 dark:border-gray-800">
+<div class="container mx-auto px-6 py-8">
+<div class="flex flex-col md:flex-row items-center justify-between">
+<div class="flex flex-wrap justify-center md:justify-start gap-6 mb-6 md:mb-0">
+<a class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors" href="#">Contact Us</a>
+</div>
+<div class="flex justify-center space-x-6 mb-6 md:mb-0">
+<a class="text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg"><path d="M247.39,68.94A8,8,0,0,0,240,64H209.57A48.66,48.66,0,0,0,168.1,40a46.91,46.91,0,0,0-33.75,13.7A47.9,47.9,0,0,0,120,88v6.09C79.74,83.47,46.81,50.72,46.46,50.37a8,8,0,0,0-13.65,4.92c-4.31,47.79,9.57,79.77,22,98.18a110.93,110.93,0,0,0,21.88,24.2c-15.23,17.53-39.21,26.74-39.47,26.84a8,8,0,0,0-3.85,11.93c.75,1.12,3.75,5.05,11.08,8.72C53.51,229.7,65.48,232,80,232c70.67,0,129.72-54.42,135.75-124.44l29.91-29.9A8,8,0,0,0,247.39,68.94Zm-45,29.41a8,8,0,0,0-2.32,5.14C196,166.58,143.28,216,80,216c-10.56,0-18-1.4-23.22-3.08,11.51-6.25,27.56-17,37.88-32.48A8,8,0,0,0,92,169.08c-.47-.27-43.91-26.34-44-96,16,13,45.25,33.17,78.67,38.79A8,8,0,0,0,136,104V88a32,32,0,0,1,9.6-22.92A30.94,30.94,0,0,1,167.9,56c12.66.16,24.49,7.88,29.44,19.21A8,8,0,0,0,204.67,80h16Z"></path></svg>
+</a>
+<a class="text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm8,191.63V152h24a8,8,0,0,0,0-16H136V112a16,16,0,0,1,16-16h16a8,8,0,0,0,0-16H152a32,32,0,0,0-32,32v24H96a8,8,0,0,0,0,16h24v63.63a88,88,0,1,1,16,0Z"></path></svg>
+</a>
+<a class="text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg"><path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160ZM176,24H80A56.06,56.06,0,0,0,24,80v96a56.06,56.06,0,0,0,56,56h96a56.06,56.06,0,0,0,56-56V80A56.06,56.06,0,0,0,176,24Zm40,152a40,40,0,0,1-40,40H80a40,40,0,0,1-40-40V80A40,40,0,0,1,80,40h96a40,40,0,0,1,40,40ZM192,76a12,12,0,1,1-12-12A12,12,0,0,1,192,76Z"></path></svg>
+</a>
+</div>
+<p class="text-sm text-gray-500 dark:text-gray-400">
+            © 2023 BloodConnect. All rights reserved.
+          </p>
+</div>
+</div>
+</footer>
+</div>
+
+</body></html>

@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blood Donation Reward System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f9fafb;
+        color: #181111;
+        line-height: 1.6;
+        overflow-x: hidden;
+      }
+
+      :root {
+        --primary-color: #ea2a33;
+        --secondary-color: #f4f0f0;
+        --text-primary: #181111;
+        --text-secondary: #575353;
+        --accent-blue: #3b82f6;
+        --success-green: #10b981;
+        --error-red: #ef4444;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      .header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid #e5e7eb;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+      }
+
+      .header-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 24px;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--primary-color);
+        margin-left: -10px;
+      }
+
+      .logo-icon {
+        width: 32px;
+        height: 32px;
+        fill: var(--primary-color);
+        transition: transform 0.5s ease, filter 0.3s ease;
+      }
+
+      .logo:hover .logo-icon {
+        transform: scale(1.2) rotate(360deg);
+        filter: drop-shadow(0 4px 10px rgba(234, 42, 51, 0.3));
+      }
+
+      .logo h2 {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text-primary);
+        transition: color 0.3s ease;
+      }
+
+      .logo:hover h2 {
+        color: var(--primary-color);
+      }
+
+      .nav {
+        display: none;
+        align-items: center;
+        gap: 32px;
+      }
+
+      @media (min-width: 768px) {
+        .nav {
+          display: flex;
+        }
+      }
+
+      .nav a {
+        text-decoration: none;
+        color: var(--text-secondary);
+        font-weight: 500;
+        font-size: 14px;
+        position: relative;
+        transition: color 0.3s ease, transform 0.3s ease;
+      }
+
+      .nav a::after {
+        content: "";
+        position: absolute;
+        width: 0;
+        height: 2px;
+        bottom: -4px;
+        left: 0;
+        background-color: var(--primary-color);
+        transition: width 0.3s ease;
+      }
+
+      .nav a:hover {
+        color: var(--primary-color);
+        transform: translateY(-2px);
+      }
+
+      .nav a:hover::after {
+        width: 100%;
+      }
+
+      .header-buttons {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.3);
+        transition: left 0.3s ease;
+      }
+
+      .btn:hover::before {
+        left: 0;
+      }
+
+      .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(234, 42, 51, 0.2);
+      }
+
+      .btn-primary {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background-color: #dc2626;
+      }
+
+      .btn-secondary {
+        background-color: #dc2626;
+        color: white;
+      }
+
+      .btn-secondary:hover {
+        background-color: #c82323;
+      }
+
+      .footer {
+        background: linear-gradient(135deg, #1f2937, #111827);
+        color: white;
+        padding: 48px 0;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .footer-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 32px;
+        margin-bottom: 32px;
+      }
+
+      @media (min-width: 768px) {
+        .footer-grid {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+
+      .footer-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .footer-brand h2 {
+        font-size: 24px;
+        font-weight: 700;
+        transition: color 0.3s ease;
+      }
+
+      .footer-brand:hover h2 {
+        color: var(--primary-color);
+      }
+
+      .footer-description {
+        color: #9ca3af;
+        font-size: 14px;
+        transition: color 0.3s ease;
+      }
+
+      .footer-description:hover {
+        color: white;
+      }
+
+      .footer-section h3 {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        position: relative;
+      }
+
+      .footer-section h3::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -4px;
+        width: 30px;
+        height: 2px;
+        background-color: var(--primary-color);
+        transition: width 0.3s ease;
+      }
+
+      .footer-section h3:hover::after {
+        width: 100%;
+      }
+
+      .footer-links {
+        list-style: none;
+      }
+
+      .footer-links li {
+        margin-bottom: 8px;
+      }
+
+      .footer-links a {
+        color: #9ca3af;
+        text-decoration: none;
+        font-size: 14px;
+        transition: color 0.3s ease, transform 0.3s ease;
+      }
+
+      .footer-links a:hover {
+        color: white;
+        transform: translateX(5px);
+      }
+
+      .social-links {
+        display: flex;
+        gap: 16px;
+      }
+
+      .social-links a {
+        color: #9ca3af;
+        transition: color 0.3s ease, transform 0.3s ease;
+      }
+
+      .social-links a:hover {
+        color: var(--primary-color);
+        transform: scale(1.2) rotate(360deg);
+      }
+
+      .footer-bottom {
+        border-top: 1px solid #374151;
+        padding-top: 32px;
+        text-align: center;
+        color: #9ca3af;
+        font-size: 14px;
+        animation: fadeInUp 1s ease-out;
+      }
+
+      .blood-red {
+        color: #dc143c;
+      }
+
+      .blood-red-bg {
+        background-color: #dc143c;
+      }
+
+      .white-bg {
+        background-color: #ffffff;
+      }
+
+      .gradient-red {
+        background: linear-gradient(135deg, #dc143c 0%, #b22222 100%);
+      }
+
+      .shadow-card {
+        box-shadow: 0 10px 25px rgba(220, 20, 60, 0.1);
+        transition: box-shadow 0.3s ease, transform 0.3s ease;
+      }
+
+      .shadow-card:hover {
+        box-shadow: 0 15px 30px rgba(220, 20, 60, 0.2);
+        transform: translateY(-5px);
+      }
+
+      .progress-bar {
+        background: linear-gradient(
+          to right,
+          #dc143c var(--progress),
+          transparent 0
+        );
+        transition: background 0.5s ease-in-out;
+      }
+
+      .coupon-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      }
+
+      .coupon-card:hover {
+        transform: scale(1.05) rotate(2deg);
+        box-shadow: 0 10px 25px rgba(220, 20, 60, 0.15);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .fade-in {
+        animation: fadeIn 0.8s ease-out forwards;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .pulse {
+        animation: pulse 1.5s infinite ease-in-out;
+      }
+
+      @keyframes bounceIn {
+        0% {
+          opacity: 0;
+          transform: scale(0.3);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.05);
+        }
+        70% {
+          transform: scale(0.9);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .bounce-in {
+        animation: bounceIn 0.8s ease-out;
+      }
+    </style>
+  </head>
+  <body class="bg-gradient-to-br from-red-50 to-pink-50 min-h-screen">
+    <!-- Header -->
+    <header class="header">
+      <div class="container">
+        <div class="header-content">
+          <div class="logo fade-in">
+            <svg class="logo-icon" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                fill="currentColor"
+              ></path>
+            </svg>
+            <h2>BloodConnect</h2>
+          </div>
+          <!-- <div class="header-buttons">
+            <a href="./home.html" class="btn btn-primary bounce-in">Home</a>
+            <a href="./reward.html" class="btn btn-primary bounce-in">Rewards</a>
+            <a href="./hospital-dashboard.html" class="btn btn-primary bounce-in"
+              >Request Blood</a
+            >
+            <a href="./donordashboard.html" class="btn btn-secondary bounce-in"
+              >Donate Blood</a
+            >
+          </div> -->
+        </div>
+      </div>
+    </header>
+
+    <div class="container mx-auto p-6 max-w-4xl">
+      <!-- Header -->
+      <header class="text-center mb-8 fade-in">
+        <h1 class="text-5xl font-bold blood-red mb-2 pulse">
+          💉 Blood Heroes Reward System
+        </h1>
+        <p class="text-gray-600 text-lg">
+          Save lives, earn rewards! Donate up to 350ml of blood and get points.
+        </p>
+      </header>
+
+      <!-- User Dashboard -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Points & Progress -->
+        <div class="white-bg p-6 rounded-xl shadow-card fade-in">
+          <h2 class="text-2xl font-semibold blood-red mb-4">
+            Your Hero Points
+          </h2>
+          <div class="text-4xl font-bold blood-red mb-2">
+            Total Points: <span id="totalPoints">0</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-4 mb-4">
+            <div
+              id="progressBar"
+              class="progress-bar h-4 rounded-full"
+              style="--progress: 0%"
+            ></div>
+          </div>
+          <p class="text-sm text-gray-600">
+            Next Reward: <span id="nextReward">500 pts - ₹500 Coupon</span>
+          </p>
+          <div class="mt-4 space-y-2">
+            <p class="text-sm">Donation History:</p>
+            <ul
+              id="historyList"
+              class="text-xs text-gray-500 max-h-32 overflow-y-auto"
+            ></ul>
+          </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="white-bg p-6 rounded-xl shadow-card fade-in">
+          <h2 class="text-2xl font-semibold blood-red mb-4">Your Impact</h2>
+          <div class="grid grid-cols-2 gap-4 text-center">
+            <div>
+              <div class="text-2xl font-bold blood-red" id="totalMl">0</div>
+              <p class="text-sm text-gray-600">ml Donated</p>
+            </div>
+            <div>
+              <div class="text-2xl font-bold blood-red" id="livesSaved">0</div>
+              <p class="text-sm text-gray-600">Lives Saved</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Donation Form -->
+      <div
+        id="donationFormSection"
+        class="white-bg p-6 rounded-xl shadow-card mb-6 fade-in"
+      >
+        <h2 class="text-2xl font-semibold blood-red mb-4">
+          Log Your Donation
+        </h2>
+        <form id="donationForm" class="space-y-4">
+          <div>
+            <label for="ml" class="block text-sm font-medium text-gray-700 mb-2"
+              >ml of Blood Donated (Max 350ml)</label
+            >
+            <input
+              type="number"
+              id="ml"
+              min="50"
+              max="350"
+              step="50"
+              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-300"
+              placeholder="e.g., 350 ml"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            class="w-full gradient-red text-white p-3 rounded-lg font-semibold hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+          >
+            Submit Donation Details
+          </button>
+        </form>
+      </div>
+
+      <!-- Rewards Section -->
+      <div class="white-bg p-6 rounded-xl shadow-card mb-6 fade-in">
+        <h2 class="text-2xl font-semibold blood-red mb-4">
+          Redeem Epic Rewards
+        </h2>
+        <div id="rewardsList" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div
+            class="border-2 border-red-200 p-4 rounded-lg text-center coupon-card hover:border-red-400"
+          >
+            <div class="text-3xl mb-2">🎟</div>
+            <p class="font-semibold">₹500 Coupon</p>
+            <p class="text-sm text-gray-600 mb-3">500 Points</p>
+            <button
+              class="blood-red-bg text-white px-4 py-2 rounded-md hover:bg-red-700 w-full transition-all duration-300 transform hover:scale-105"
+              onclick="redeemReward(500, '₹500 Coupon', 'COUPON500')"
+            >
+              Redeem
+            </button>
+          </div>
+          <div
+            class="border-2 border-red-200 p-4 rounded-lg text-center coupon-card hover:border-red-400"
+          >
+            <div class="text-3xl mb-2">💰</div>
+            <p class="font-semibold">₹1000 Cashback</p>
+            <p class="text-sm text-gray-600 mb-3">1000 Points</p>
+            <button
+              class="blood-red-bg text-white px-4 py-2 rounded-md hover:bg-red-700 w-full transition-all duration-300 transform hover:scale-105"
+              onclick="redeemReward(1000, '₹1000 Cashback', 'CASHBACK1000')"
+            >
+              Redeem
+            </button>
+          </div>
+          <div
+            class="border-2 border-red-200 p-4 rounded-lg text-center coupon-card hover:border-red-400"
+          >
+            <div class="text-3xl mb-2">🏆</div>
+            <p class="font-semibold">₹2500 Gift Card</p>
+            <p class="text-sm text-gray-600 mb-3">2500 Points</p>
+            <button
+              class="blood-red-bg text-white px-4 py-2 rounded-md hover:bg-red-700 w-full transition-all duration-300 transform hover:scale-105"
+              onclick="redeemReward(2500, '₹2500 Gift Card', 'GIFTCARD2500')"
+            >
+              Redeem
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Redeemed Coupons Section -->
+      <!-- <div class="white-bg p-6 rounded-xl shadow-card mb-6 fade-in">
+        <h2 class="text-2xl font-semibold blood-red mb-4">
+          Your Redeemed Coupons
+        </h2>
+        <div id="couponList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <p id="noCoupons" class="text-gray-600">
+            No coupons redeemed yet. Keep donating!
+          </p>
+        </div>
+        <div class="mt-6 p-4 bg-red-50 rounded-lg shadow-inner">
+          <p class="text-sm text-gray-700">
+            More rewards coming soon: Exclusive merchandise, priority donor
+            badges, and partner discounts!
+          </p>
+        </div>
+      </div> -->
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="fade-in">
+            <div class="footer-brand">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+                  fill="#ea2a33"
+                ></path>
+              </svg>
+              <h2>BloodConnect</h2>
+            </div>
+            <p class="footer-description">Connecting donors, saving lives.</p>
+          </div>
+
+          <div class="footer-section fade-in">
+            <h3>Quick Links</h3>
+            <ul class="footer-links">
+              <li><a href="#">About Us</a></li>
+              <li><a href="#">How It Works</a></li>
+              <li><a href="#">Contact</a></li>
+              <li><a href="#">FAQ</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-section fade-in">
+            <h3>Legal</h3>
+            <ul class="footer-links">
+              <li><a href="./privacy_policy.html">Privacy Policy</a></li>
+              <li><a href="#">Terms of Service</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-section fade-in">
+            <h3>Follow Us</h3>
+            <div class="social-links">
+              <a href="#">
+                <svg
+                  width="24"
+                  height="24"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </a>
+              <a href="#">
+                <svg
+                  width="24"
+                  height="24"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.71v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"
+                  />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>© 2025 BloodConnect. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      let totalPoints = 0;
+      let totalMl = 0;
+      let livesSaved = 0;
+      let history = [];
+      let coupons = [];
+      const userId = "user_" + Math.random().toString(36).substr(2, 9); // Simple user ID for localStorage
+
+      function loadData() {
+        console.log("Loading data from localStorage...");
+        const savedMl = localStorage.getItem(`total_ml_${userId}`);
+        if (savedMl !== null) {
+          totalMl = parseInt(savedMl) || 0;
+          totalPoints = totalMl; // 1 point per ml donated
+          livesSaved = Math.floor(totalMl / 350);
+        }
+
+        const savedHistory = localStorage.getItem(`history_${userId}`);
+        if (savedHistory !== null) {
+          history = JSON.parse(savedHistory) || [];
+        }
+
+        const savedCoupons = localStorage.getItem(`coupons_${userId}`);
+        if (savedCoupons !== null) {
+          coupons = JSON.parse(savedCoupons) || [];
+        }
+
+        console.log("Loaded: totalMl =", totalMl, "totalPoints =", totalPoints, "livesSaved =", livesSaved);
+        updateStats();
+        displayCoupons();
+        updateHistory();
+      }
+
+      function saveData() {
+        console.log("Saving data to localStorage...");
+        localStorage.setItem(`total_ml_${userId}`, totalMl);
+        localStorage.setItem(`history_${userId}`, JSON.stringify(history));
+        localStorage.setItem(`coupons_${userId}`, JSON.stringify(coupons));
+        console.log("Saved: totalMl =", totalMl, "totalPoints =", totalPoints, "livesSaved =", livesSaved);
+      }
+
+      function updateProgress() {
+        const thresholds = [
+          { points: 500, reward: "₹500 Coupon" },
+          { points: 1000, reward: "₹1000 Cashback" },
+          { points: 2500, reward: "₹2500 Gift Card" },
+        ];
+        let next = thresholds.find((t) => totalPoints < t.points) || thresholds[thresholds.length - 1];
+        const progress = Math.min((totalPoints / next.points) * 100, 100);
+        document.getElementById("progressBar").style.setProperty("--progress", progress + "%");
+        document.getElementById("nextReward").textContent = `${next.points} pts - ${next.reward}`;
+        console.log("Progress updated: ", progress, "% for next reward:", next.reward);
+      }
+
+      function updateStats() {
+        document.getElementById("totalPoints").textContent = totalPoints;
+        document.getElementById("totalMl").textContent = totalMl.toLocaleString();
+        document.getElementById("livesSaved").textContent = livesSaved;
+        updateProgress();
+        console.log("Stats updated: totalPoints =", totalPoints, "totalMl =", totalMl, "livesSaved =", livesSaved);
+      }
+
+      function updateHistory() {
+        document.getElementById("historyList").innerHTML = history
+          .map((h) => `<li class="fade-in">${h}</li>`)
+          .join("");
+        console.log("History updated:", history);
+      }
+
+      function displayCoupons() {
+        const couponList = document.getElementById("couponList");
+        const noCoupons = document.getElementById("noCoupons");
+        if (coupons.length === 0) {
+          noCoupons.classList.remove("hidden");
+          couponList.innerHTML = "";
+        } else {
+          noCoupons.classList.add("hidden");
+          couponList.innerHTML = coupons
+            .map(
+              (c) => `
+                <div class="bg-red-50 p-4 rounded-lg border-2 border-red-200 fade-in">
+                    <p class="font-semibold">${c.name}</p>
+                    <p class="text-sm text-gray-600">Code: ${c.code}</p>
+                    <p class="text-xs text-gray-500">Redeemed on ${c.date}</p>
+                </div>
+              `
+            )
+            .join("");
+        }
+        console.log("Coupons displayed:", coupons);
+      }
+
+      document.getElementById("donationForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const mlInput = document.getElementById("ml");
+        const ml = parseInt(mlInput.value);
+        console.log("Form submitted with ml =", ml);
+
+        if (isNaN(ml) || ml < 50 || ml > 350 || ml % 50 !== 0) {
+          alert("Please enter a valid amount (50-350ml, in multiples of 50).");
+          console.error("Invalid input: ml =", ml);
+          return;
+        }
+
+        totalMl += ml;
+        totalPoints = totalMl; // 1 point per ml donated
+        livesSaved = Math.floor(totalMl / 350);
+        history.unshift(`${new Date().toLocaleDateString()}: +${ml}ml (+${ml} pts)`);
+        if (history.length > 5) history.pop();
+
+        saveData();
+        updateStats();
+        updateHistory();
+        mlInput.value = "";
+        alert(`Amazing! You donated ${ml}ml and earned ${ml} points. You've saved ${livesSaved} lives!`);
+      });
+
+      function redeemReward(pointsRequired, rewardName, couponCode) {
+        console.log("Attempting to redeem reward:", rewardName, "Points required:", pointsRequired);
+        if (totalPoints >= pointsRequired) {
+          totalPoints -= pointsRequired;
+          const coupon = {
+            name: rewardName,
+            code: couponCode + "-" + Math.random().toString(36).substr(2, 8).toUpperCase(),
+            date: new Date().toLocaleDateString(),
+          };
+          coupons.push(coupon);
+          history.unshift(`${new Date().toLocaleDateString()}: Redeemed ${rewardName}`);
+          if (history.length > 5) history.pop();
+          saveData();
+          updateStats();
+          updateHistory();
+          displayCoupons();
+          alert(`Congratulations! You've redeemed ${rewardName}! Coupon Code: ${coupon.code}`);
+          console.log("Reward redeemed:", coupon);
+        } else {
+          alert(`Keep donating! You need ${pointsRequired - totalPoints} more points for ${rewardName}.`);
+          console.log("Insufficient points for", rewardName, ". Need:", pointsRequired - totalPoints);
+        }
+      }
+
+      window.addEventListener('DOMContentLoaded', () => {
+        loadData();
+      });
+    </script>
+  </body>
+</html>

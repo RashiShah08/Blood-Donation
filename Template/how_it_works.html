@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BloodConnect - How it Works</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#ea2a33",
+            "background-light": "#f8f6f6",
+            "background-dark": "#211111",
+          },
+          fontFamily: {
+            "display": ["Inter"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+<style>
+    .hero-bg-image {
+      background-image: linear-gradient(rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.6) 100%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuDqAXW8R-AHvT-ywoKlN5Shuk5oXlRIMRaTMpusLsGamhpPTtk6Ysr0GM8ctwhMlhkrd7FhrPa8F6T8OsUCpxjBzkwvdPUV5hrnLpXl3a-D7vUrqcrSRCyPEJvRHMVgZBkSJDLTJX30YyuIZImxGG0St46ia-oC0-Xk6EnYgxBUc4AVkHPEFpQlI7FYFFsdPWbv_1LOVnY8mnzr68WAnX4-qBHwfWD3b-SqjA3X9HgNRYnvaEV7V_RQoBwU-Xkx_p_U0xXUnXb3yyGt");
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-800 dark:text-gray-200">
+<div class="flex flex-col min-h-screen">
+<header class="bg-background-light dark:bg-background-dark/80 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800">
+<div class="container mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex items-center justify-between h-16">
+<div class="flex items-center gap-3">
+<svg class="h-8 w-8 text-primary" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z" fill="currentColor"></path>
+</svg>
+<h1 class="text-xl font-bold text-gray-900 dark:text-white">BloodConnect</h1>
+</div>
+<!-- <nav class="hidden md:flex items-center space-x-8">
+<a class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors" href="#">Home</a>
+<a class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors" href="#">About</a>
+<a class="text-sm font-bold text-primary dark:text-primary" href="#">How it Works</a>
+<a class="text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary transition-colors" href="#">Contact</a>
+</nav> -->
+<div class="flex items-center">
+<!-- <button class="bg-primary text-white text-sm font-bold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity">Donate Now</button> -->
+</div>
+</div>
+</div>
+</header>
+<main class="flex-grow">
+<section class="hero-bg-image bg-cover bg-center">
+<div class="bg-black/50">
+<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
+<div class="text-center">
+<h1 class="text-4xl md:text-6xl font-black text-white tracking-tighter">How BloodConnect Works</h1>
+<p class="mt-4 max-w-2xl mx-auto text-lg text-gray-200">Learn how our platform connects donors and recipients, making blood donation simple and impactful.</p>
+</div>
+</div>
+</div>
+</section>
+<section class="py-16 md:py-24 bg-background-light dark:bg-background-dark">
+<div class="container mx-auto px-4 sm:px-6 lg:px-8">
+<div class="grid grid-cols-1 md:grid-cols-1 gap-12 lg:gap-16">
+<div class="flex flex-col md:flex-row items-center gap-8 lg:gap-12">
+<div class="md:w-1/2">
+<h2 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">1. Find a Match</h2>
+<p class="mt-4 text-lg text-gray-600 dark:text-gray-300">Our advanced matching algorithm quickly identifies potential donors based on blood type, location, and availability. Recipients can easily search for compatible donors and initiate contact.</p>
+</div>
+<div class="md:w-1/2">
+<div class="aspect-w-4 aspect-h-3 overflow-hidden rounded-xl shadow-lg">
+<div class="w-full h-full bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBIIyaf4oyqati1h17xlhj9ZWcXQd71gpr_HNoo3T6Lsl8eGp5QR90v00LmTu6xGucTRZnOFC2ANs1y4GlNODnYOwEOGl3CGKAs7iOGOYnwy2b7l3zWIpRsFqzGskiuiFWPcnDjj5H3F6lLIm8vI_mZ1TR0u1T8Xl7MWmgiOh5ebgdMZBfPsyPi1PXIuSiWKq_Qksy6yE3L3FiTCLOCiOeTNXVzCcDHT2Uao-KPNkFUuzJxJA4WqhvTSrY7BR7kKbiruUePe7KWCqQ7");'></div>
+</div>
+</div>
+</div>
+<div class="flex flex-col md:flex-row-reverse items-center gap-8 lg:gap-12">
+<div class="md:w-1/2">
+<h2 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">2. Donate with Ease</h2>
+<p class="mt-4 text-lg text-gray-600 dark:text-gray-300">Donors can schedule donations at their convenience, choosing from a network of verified donation centers. Our platform provides all necessary information and support throughout the process.</p>
+</div>
+<div class="md:w-1/2">
+<div class="aspect-w-4 aspect-h-3 overflow-hidden rounded-xl shadow-lg">
+<div class="w-full h-full bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBdb1zb329VsHZtjDnGlF6dWeQru_S8Dd5TOoITVj2esWOGuMKkki4ZJOGRn-nf9lhUDK_ACY4C-lD2LjTLicooLkszh1MUgeWpoY-SHVFzOCn-Kqku2OXOYTFaLTa22T6M3186OnKof67PlCYgFBrivbqs4Ux9nv0xbJvSCdGO-4ZzAoUXmD1f_sQNk_w6oF-ycp-W46bmfXCs_431iGptp4HmiQmRJf6zt8k5JzaEWFRKyZjqAKHML6-rTph7LimpbofTcZsDVVQH");'></div>
+</div>
+</div>
+</div>
+<div class="flex flex-col md:flex-row items-center gap-8 lg:gap-12">
+<div class="md:w-1/2">
+<h2 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">3. Save a Life</h2>
+<p class="mt-4 text-lg text-gray-600 dark:text-gray-300">By donating through BloodConnect, you directly contribute to saving lives. Your blood donation can make a critical difference for patients in need, providing hope and healing.</p>
+</div>
+<div class="md:w-1/2">
+<div class="aspect-w-4 aspect-h-3 overflow-hidden rounded-xl shadow-lg">
+<div class="w-full h-full bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAtLYc-Dj9SRvurF9nRs-RwTAQdlXhEm1WRel_ye0QkRF0RnttrkPJTb-ox8bMOyPnOVE65VSOu7IZYQJCXMWhjIR8QDMkoEMnrgCp1eExETQDct0-qI7HXLW-JpA1T8zvWTLCGnwVG2PJMqiD1uKh_9SgdufA3uQx2gnlnunvp3yMCKwzAy9wx1nomu-PJSEbR_tNvDYywl8mHE-I60kopj_E1lEWhh8nY-1UkjC_EXnl_WJPZUI9SDmh2eD8NEv_UvsTavW_zZuxy");'></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<footer class="bg-gray-900 text-white">
+<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+<div>
+<div class="flex items-center gap-3">
+<svg class="h-8 w-8 text-primary" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M36.7273 44C33.9891 44 31.6043 39.8386 30.3636 33.69C29.123 39.8386 26.7382 44 24 44C21.2618 44 18.877 39.8386 17.6364 33.69C16.3957 39.8386 14.0109 44 11.2727 44C7.25611 44 4 35.0457 4 24C4 12.9543 7.25611 4 11.2727 4C14.0109 4 16.3957 8.16144 17.6364 14.31C18.877 8.16144 21.2618 4 24 4C26.7382 4 29.123 8.16144 30.3636 14.31C31.6043 8.16144 33.9891 4 36.7273 4C40.7439 4 44 12.9543 44 24C44 35.0457 40.7439 44 36.7273 44Z" fill="currentColor"></path>
+</svg>
+<h1 class="text-xl font-bold">BloodConnect</h1>
+</div>
+<p class="mt-4 text-gray-400">Connecting donors with recipients to save lives.</p>
+</div>
+<div>
+<h3 class="text-lg font-semibold">Quick Links</h3>
+<ul class="mt-4 space-y-2">
+<li><a class="text-gray-400 hover:text-white" href="#">Home</a></li>
+<li><a class="text-gray-400 hover:text-white" href="#">About</a></li>
+<li><a class="text-gray-400 hover:text-white" href="#">How it Works</a></li>
+<li><a class="text-gray-400 hover:text-white" href="#">Contact</a></li>
+</ul>
+</div>
+<div>
+<h3 class="text-lg font-semibold">Legal</h3>
+<ul class="mt-4 space-y-2">
+<li><a class="text-gray-400 hover:text-white" href="#">Privacy Policy</a></li>
+<li><a class="text-gray-400 hover:text-white" href="#">Terms of Service</a></li>
+</ul>
+</div>
+<div>
+<h3 class="text-lg font-semibold">Follow Us</h3>
+<div class="flex mt-4 space-x-4">
+<a class="text-gray-400 hover:text-white" href="#">
+<svg aria-hidden="true" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+<path d="M22.46,6C21.73,6.33 20.94,6.56 20.1,6.65A4.4,4.4,0,0,0,21.5,5.1a8.82,8.82,0,0,1-1.67.64A4.38,4.38,0,0,0,12.2,8.38a12.41,12.41,0,0,1-9-4.56,4.38,4.38,0,0,0,1.35,5.85,4.33,4.33,0,0,1-2-.55v.05a4.38,4.38,0,0,0,3.5,4.3,4.51,4.51,0,0,1-1.1.15,4.3,4.3,0,0,1-.86-.08,4.38,4.38,0,0,0,4.08,3.06,8.8,8.8,0,0,1-5.46,1.88A9.2,9.2,0,0,1,2,18.06a12.33,12.33,0,0,0,6.67,1.94c8,0,12.38-6.6,12.38-12.38,0-.19,0-.38,0-.56A8.85,8.85,0,0,0,22.46,6Z"></path>
+</svg>
+</a>
+<a class="text-gray-400 hover:text-white" href="#">
+<svg aria-hidden="true" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+<path d="M12,2.163A10,10,0,0,0,2.163,12,10,10,0,0,0,12,21.837,10,10,0,0,0,21.837,12,10,10,0,0,0,12,2.163M12,0A12,12,0,1,1,0,12,12,12,0,0,1,12,0Z"></path><path d="M12,6.38A5.62,5.62,0,1,0,17.62,12,5.62,5.62,0,0,0,12,6.38M12,16A4,4,0,1,1,16,12,4,4,0,0,1,12,16Z"></path><path d="M17.84,5.4a1.49,1.49,0,1,0,1.49,1.49A1.49,1.49,0,0,0,17.84,5.4Z"></path>
+</svg>
+</a>
+<a class="text-gray-400 hover:text-white" href="#">
+<svg aria-hidden="true" class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+<path d="M22,12c0-5.52-4.48-10-10-10S2,6.48,2,12c0,4.99,3.66,9.13,8.44,9.88v-7.1H8.05V12h2.39V9.78c0-2.37,1.42-3.66,3.56-3.66,1.02,0,1.9.08,2.16.11v2.48h-1.46c-1.15,0-1.37.55-1.37,1.34V12h2.77l-.36,2.78h-2.41v7.1C18.34,21.13,22,16.99,22,12Z"></path>
+</svg>
+</a>
+</div>
+</div>
+</div>
+<div class="mt-8 border-t border-gray-800 pt-8 text-center text-gray-500">
+<p>© 2024 BloodConnect. All rights reserved.</p>
+</div>
+</div>
+</footer>
+</div>
+</body></html>

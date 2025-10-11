@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Dashboard - Lifeblood</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?display=swap&family=Inter:wght@400;500;600;700;900&family=Noto+Sans:wght@400;500;700;900">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <style>
+        :root {
+            --primary-color: #ea2a33;
+            --secondary-color: #f4f0f0;
+            --text-primary: #181111;
+            --text-secondary: #575353;
+            --accent-blue: #3b82f6;
+            --success-green: #10b981;
+            --error-red: #ef4444;
+        }
+        
+        body {
+            font-family: Inter, "Noto Sans", sans-serif;
+        }
+        
+        .blood-type-badge {
+            background: linear-gradient(135deg, #ea2a33, #dc2626);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-weight: bold;
+            font-size: 1.125rem;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(to right, #ea2a33, rgba(234, 42, 51, 0.8));
+            color: white;
+            padding: 64px 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(
+                circle,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            animation: pulse 10s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 0.2; }
+            100% { transform: scale(1); opacity: 0.5; }
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .hero p {
+            font-size: 20px;
+            font-weight: 300;
+            max-width: 512px;
+            margin: 0 auto;
+            animation: fadeInUp 1s ease-out 0.3s;
+            animation-fill-mode: backwards;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (min-width: 768px) {
+            .hero h1 { font-size: 60px; }
+        }
+
+        /* Animations */
+        @keyframes fade-slide {
+            0% { opacity: 0; transform: translateY(15px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 0 0 rgba(234, 42, 51, 0.5); }
+            50% { box-shadow: 0 0 10px 5px rgba(234, 42, 51, 0.2); }
+            100% { box-shadow: 0 0 0 0 rgba(234, 42, 51, 0); }
+        }
+
+        @keyframes icon-float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0); }
+        }
+
+        @keyframes ripple {
+            0% { transform: scale(0); opacity: 0.5; }
+            100% { transform: scale(4); opacity: 0; }
+        }
+
+        .animate-fade-slide { animation: fade-slide 0.8s ease-out forwards; }
+        .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+        .animate-icon-float { transition: transform 0.3s ease; }
+        .animate-icon-float:hover { animation: icon-float 1.5s ease-in-out infinite; }
+        .animate-ripple { position: relative; overflow: hidden; }
+        .animate-ripple::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            transform: scale(0);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .animate-ripple:active::after { animation: ripple 0.5s ease-out; }
+
+        /* Enhanced UI */
+        .profile-card > div > div {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .profile-card > div > div:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .request-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 4px solid #ea2a33;
+        }
+        .request-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .urgency-critical { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .urgency-high { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .urgency-medium { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .urgency-low { background: linear-gradient(135deg, #10b981, #059669); }
+        .profile-card { background: linear-gradient(135deg, #ffffff, #f8fafc); border: 1px solid rgba(234, 42, 51, 0.1); }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #ea2a33;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .blood-type-badge, .urgency-high, .urgency-medium, .urgency-low {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        .material-symbols-outlined { transition: transform 0.3s ease; }
+        nav a { transition: color 0.3s ease, transform 0.3s ease; }
+        nav a:hover { transform: translateY(-2px); }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-content.small {
+            max-width: 500px;
+            padding: 1.5rem;
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .modal-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-blue));
+        }
+
+        .modal-header h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-header p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .question-group {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+            border-radius: 15px;
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .question-group:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .question {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            background: white;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .radio-option:hover {
+            border-color: var(--primary-color);
+            background: rgba(234, 42, 51, 0.05);
+        }
+
+        .radio-option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            margin: 0;
+            cursor: pointer;
+            accent-color: var(--primary-color);
+        }
+
+        .radio-option.selected {
+            border-color: var(--primary-color);
+            background: rgba(234, 42, 51, 0.1);
+            color: var(--primary-color);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #d91f28 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(234, 42, 51, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(234, 42, 51, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: var(--text-secondary);
+            border: 2px solid #e9ecef;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+            transform: translateY(-1px);
+        }
+
+        .btn-accepted {
+            background: linear-gradient(135deg, var(--success-green) 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-accepted:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .modal-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+        }
+
+        .modal-icon.success {
+            background: linear-gradient(135deg, var(--success-green) 0%, #059669 100%);
+            color: white;
+        }
+
+        .modal-icon.error {
+            background: linear-gradient(135deg, var(--error-red) 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            margin: 2rem 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-blue));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .question-counter {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .error-message {
+            color: var(--error-red);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            text-align: center;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .modal-content { padding: 1.5rem; width: 95%; }
+            .modal-content.small { width: 85%; }
+            .modal-header h1 { font-size: 1.8rem; }
+            .radio-group { flex-direction: column; gap: 1rem; align-items: stretch; }
+            .radio-option { justify-content: center; }
+            .form-actions { flex-direction: column; }
+        }
+
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <!-- Navigation -->
+    <header class="sticky top-0 z-20 bg-white/90 backdrop-blur-md shadow-sm animate-pulse-glow">
+        <div class="container mx-auto flex items-center justify-between px-6 py-4">
+            <div class="flex items-center gap-3 text-red-600 animate-fade-slide">
+                <svg class="size-8 animate-icon-float" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M24 4C12.95 4 4 12.95 4 24C4 35.05 12.95 44 24 44C35.05 44 44 35.05 44 24C44 12.95 35.05 4 24 4ZM30.36 33.69C29.12 27.54 26.74 23 24 23C21.26 23 18.88 27.54 17.64 33.69C16.4 39.84 14.01 44 11.27 44C7.26 44 4 35.05 4 24C4 12.95 7.26 4 11.27 4C14.01 4 16.4 8.16 17.64 14.31C18.88 8.16 21.26 4 24 4C26.74 4 29.12 8.16 30.36 14.31C31.6 8.16 33.99 4 36.73 4C40.74 4 44 12.95 44 24C44 35.05 40.74 44 36.73 44C33.99 44 31.6 39.84 30.36 33.69Z" fill="#ea2a33"></path>
+                </svg>
+                <h2 class="text-2xl font-bold tracking-tight text-gray-900">BloodConnect</h2>
+            </div>
+              <nav class="hidden md:flex items-center gap-8">
+                <a class="text-sm font-medium text-gray-700 hover:text-red-600 transition-colors animate-fade-slide" style="animation-delay: 0.1s;" href="{{ url_for('reward') }}">Reward</a>
+                <!-- <a class="text-sm font-medium text-gray-700 hover:text-red-600 transition-colors animate-fade-slide" style="animation-delay: 0.2s;" href="#">History</a>
+                <a class="text-sm font-medium text-gray-700 hover:text-red-600 transition-colors animate-fade-slide" style="animation-delay: 0.3s;" href="#">Settings</a> -->
+            </nav>   
+            <div class="flex items-center gap-2">
+                <button id="logoutBtn" class="flex items-center justify-center rounded-md h-10 px-4 bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition-colors animate-ripple animate-pulse-glow">
+                    <span class="material-symbols-outlined mr-2 animate-icon-float">logout</span>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- Welcome Section -->
+        <section class="hero">
+            <div class="container">
+                <h1>Donor Dashboard</h1>
+                <p>Manage blood requests, track donations, and connect with donors in real-time</p>
+            </div>
+        </section>
+
+        <!-- Profile Section -->
+        <section class="mb-12">
+            <div class="mt-12 flex items-center gap-3 mb-6 animate-fade-slide">
+                <span class="material-symbols-outlined text-3xl text-red-600 animate-icon-float">person</span>
+                <h2 class="text-2xl font-bold text-gray-900">Your Profile</h2>
+            </div>
+            
+            <div id="profileSection" class="w-full">
+                <div class="flex justify-center items-center h-32">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Blood Requests Section -->
+        <section>
+            <div class="flex items-center gap-3 mb-6 animate-fade-slide">
+                <span class="material-symbols-outlined text-3xl text-red-600 animate-icon-float">volunteer_activism</span>
+                <h2 class="text-2xl font-bold text-gray-900">Matching Blood Requests</h2>
+            </div>
+            
+            <div id="requestsSection" class="w-full">
+                <div class="flex justify-center items-center h-32">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Eligibility Form Modal -->
+        <div id="eligibilityModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header fade-in">
+                    <h1>🩸 Donor Eligibility Form</h1>
+                    <p>Please answer all questions honestly to ensure safe blood donation</p>
+                </div>
+
+                <div class="fade-in">
+                    <div class="question-counter">
+                        <span id="current-question">0</span> of <span id="total-questions">11</span> questions answered
+                    </div>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+
+                    <div id="formError" class="error-message">Please answer all questions before submitting.</div>
+
+                    <form id="eligibilityForm">
+                        <div class="question-group">
+                            <div class="question">
+                                Have you had a cold, cough, fever, taken antibiotics, tetanus vaccination, or COVID-19 vaccine in the past 15 days?
+                            </div>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="q1" value="yes" required>
+                                    <span>Yes</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="q1" value="no" required>
+                                    <span>No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="question-group">
+                            <div class="question">
+                                Have you traveled outside India or received vaccinations for yellow fever, measles, or mumps in the past 1 month?
+                            </div>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="q2" value="yes" required>
+                                    <span>Yes</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="q2" value="no" required>
+                                    <span>No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="question-group">
+                            <div class="question">
+                                Do you currently have or recently had oral polio, typhoid, or cholera?
+                            </div>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="q3" value="yes" required>
+                                    <span>Yes</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="q3" value="no" required>
+                                    <span>No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="question-group">
+                            <div class="question">
+                                Have you had a history of malaria in the past 3 months?
+                            </div>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="q4" value="yes" required>
+                                    <span>Yes</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="q4" value="no" required>
+                                    <span>No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="question-group">
+                            <div class="question">
+                                Have you had a history of dengue, chikungunya, minor surgery, abortion, or dental extraction in the past 6 months?
+                            </div>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="q5" value="yes" required>
+                                    <span>Yes</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="q5" value="no" required>
+                                    <span>No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="question-group">
+                            <div class="question">
+                                Have you had any major surgery, tattoo, body piercing, typhoid, or animal bite followed by anti-rabies immunoglobulin in the past 1 year?
+                            </div>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="q6" value="yes" required>
+                                    <span>Yes</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="q6" value="no" required>
+                                    <span>No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="question-group">
+                            <div class="question">
+                                Have you received Hepatitis B immunoglobulin, blood transfusion, or suffered from jaundice (due to hepatitis A & E) in the past 1 year?
+                            </div>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="q7" value="yes" required>
+                                    <span>Yes</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="q7" value="no" required>
+                                    <span>No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="question-group">
+                            <div class="question">
+                                Have you had a history of tuberculosis (TB) in the past 2 years?
+                            </div>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="q8" value="yes" required>
+                                    <span>Yes</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="q8" value="no" required>
+                                    <span>No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="question-group">
+                            <div class="question">
+                                Do you currently have or have you ever been diagnosed with cancer, heart disease, chronic kidney disease, chronic liver disease, epilepsy, abnormal bleeding disorder, leprosy, kala azar, unexplained weight loss, schizophrenia, diabetes requiring insulin therapy, HIV infection, Hepatitis B & C infection, jaundice of unknown cause, or endocrine disorders?
+                            </div>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="q9" value="yes" required>
+                                    <span>Yes</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="q9" value="no" required>
+                                    <span>No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="question-group">
+                            <div class="question">
+                                Are you currently menstruating, in the lactation period, or within 1 year of baby delivery (if female)?
+                            </div>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="q10" value="yes" required>
+                                    <span>Yes</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="q10" value="no" required>
+                                    <span>No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="question-group">
+                            <div class="question">
+                                Are you aware that the minimum interval between blood donations is 3 months for males and 4 months for females?
+                            </div>
+                            <div class="radio-group">
+                                <label class="radio-option">
+                                    <input type="radio" name="q11" value="yes" required>
+                                    <span>Yes</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="q11" value="no" required>
+                                    <span>No</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeEligibilityModal()">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="checkEligibilityButton">Check Eligibility →</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Result Modal -->
+                <div id="resultModal" class="modal">
+                    <div class="modal-content small">
+                        <div class="modal-icon" id="modalIcon">
+                            <span id="modalEmoji"></span>
+                        </div>
+                        <h2 id="modalTitle"></h2>
+                        <p id="modalMessage"></p>
+                        <button class="btn btn-primary" id="modalButton">Got it</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Request Info Modal -->
+        <div id="requestInfoModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header fade-in">
+                    <h1>🩸 Request Details</h1>
+                    <p>Detailed information about the blood request</p>
+                </div>
+                <div id="requestDetails" class="fade-in">
+                    <!-- Details will be populated here -->
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeRequestInfoModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Supabase client
+        console.log('Initializing Supabase client...');
+        const supabaseUrl = '<Your_supabase_url_here>';
+        const supabaseKey = '<Your_supabase_key_here>';
+        let supabase;
+        try {
+            supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+            console.log('Supabase client initialized successfully');
+        } catch (error) {
+            console.error('Supabase initialization failed:', error.message);
+            displaySupabaseError();
+        }
+
+        let currentUserProfile = null;
+        let currentUserId = null;
+
+        // Display Supabase initialization error
+        function displaySupabaseError() {
+            const profileSection = document.getElementById('profileSection');
+            const requestsSection = document.getElementById('requestsSection');
+            profileSection.innerHTML = `
+                <div class="text-center p-8 bg-red-50 rounded-lg border border-red-200 animate-fade-slide">
+                    <span class="material-symbols-outlined text-6xl text-red-500 mb-4 animate-icon-float">error</span>
+                    <h3 class="text-xl font-semibold text-red-900 mb-2">Database Connection Error</h3>
+                    <p class="text-red-700">Failed to connect to the database. Please check your internet connection or check console for details.</p>
+                </div>
+            `;
+            requestsSection.innerHTML = profileSection.innerHTML;
+        }
+
+        // Fetch and display profile data
+        async function loadProfile() {
+            console.log('Loading profile...');
+            currentUserId = localStorage.getItem('userId');
+            if (!currentUserId) {
+                console.warn('No user ID found in localStorage. Redirecting to login.');
+                window.location.replace('/donor_login');
+                return;
+            }
+            try {
+                if (!supabase) {
+                    throw new Error('Supabase client not initialized');
+                }
+                const { data, error } = await supabase
+                    .from('profilelogin')
+                    .select('id, name, age, gender, weight, blood_group, health_issues')
+                    .eq('id', currentUserId)
+                    .single();
+
+                if (error) {
+                    console.error('Profile fetch error:', error);
+                    throw new Error(`Profile fetch error: ${error.message} (code: ${error.code})`);
+                }
+
+                console.log('Profile data:', data);
+                if (data) {
+                    currentUserProfile = data;
+                    console.log('Profile loaded:', currentUserProfile);
+                    displayProfile(currentUserProfile);
+                } else {
+                    console.warn('No profile data found');
+                    displayNoProfile();
+                }
+            } catch (error) {
+                console.error('Error fetching profile:', error.message);
+                displayProfileError();
+            }
+        }
+
+        // Display profile information
+        function displayProfile(profile) {
+            const profileSection = document.getElementById('profileSection');
+            profileSection.innerHTML = `
+                <div class="profile-card rounded-xl shadow-lg p-8 animate-fade-slide">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="flex flex-col items-center text-center p-6 bg-white rounded-lg shadow-sm animate-fade-slide" style="animation-delay: 0s;">
+                            <span class="material-symbols-outlined text-4xl text-red-600 mb-3 animate-icon-float">person</span>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-1">Name</h3>
+                            <p class="text-2xl font-bold text-gray-800">${profile.name || 'Not provided'}</p>
+                        </div>
+                        <div class="flex flex-col items-center text-center p-6 bg-white rounded-lg shadow-sm animate-fade-slide" style="animation-delay: 0.1s;">
+                            <span class="material-symbols-outlined text-4xl text-blue-600 mb-3 animate-icon-float">calendar_today</span>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-1">Age</h3>
+                            <p class="text-2xl font-bold text-gray-800">${profile.age || 'Not provided'} years</p>
+                        </div>
+                        <div class="flex flex-col items-center text-center p-6 bg-white rounded-lg shadow-sm animate-fade-slide" style="animation-delay: 0.2s;">
+                            <span class="material-symbols-outlined text-4xl text-purple-600 mb-3 animate-icon-float">wc</span>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-1">Gender</h3>
+                            <p class="text-2xl font-bold text-gray-800">${profile.gender || 'Not provided'}</p>
+                        </div>
+                        <div class="flex flex-col items-center text-center p-6 bg-white rounded-lg shadow-sm animate-fade-slide" style="animation-delay: 0.3s;">
+                            <span class="material-symbols-outlined text-4xl text-green-600 mb-3 animate-icon-float">monitor_weight</span>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-1">Weight</h3>
+                            <p class="text-2xl font-bold text-gray-800">${profile.weight || 'Not provided'} kg</p>
+                        </div>
+                        <div class="flex flex-col items-center text-center p-6 bg-white rounded-lg shadow-sm animate-fade-slide" style="animation-delay: 0.4s;">
+                            <span class="material-symbols-outlined text-4xl text-red-600 mb-3 animate-icon-float">water_drop</span>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-1">Blood Type</h3>
+                            <div class="blood-type-badge animate-pulse-glow">${profile.blood_group || 'Not provided'}</div>
+                        </div>
+                        <div class="flex flex-col items-center text-center p-6 bg-white rounded-lg shadow-sm animate-fade-slide" style="animation-delay: 0.5s;">
+                            <span class="material-symbols-outlined text-4xl text-orange-600 mb-3 animate-icon-float">health_and_safety</span>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-1">Health Issues</h3>
+                            <p class="text-lg text-gray-800 break-words">${profile.health_issues || 'None reported'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Display no profile message
+        function displayNoProfile() {
+            const profileSection = document.getElementById('profileSection');
+            profileSection.innerHTML = `
+                <div class="text-center p-8 bg-white rounded-lg shadow-lg animate-fade-slide">
+                    <span class="material-symbols-outlined text-6xl text-gray-400 mb-4 animate-icon-float">person_off</span>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">No Profile Found</h3>
+                    <p class="text-gray-600">Please create your donor profile to get started.</p>
+                </div>
+            `;
+        }
+
+        // Display profile error
+        function displayProfileError() {
+            const profileSection = document.getElementById('profileSection');
+            profileSection.innerHTML = `
+                <div class="text-center p-8 bg-red-50 rounded-lg border border-red-200 animate-fade-slide">
+                    <span class="material-symbols-outlined text-6xl text-red-500 mb-4 animate-icon-float">error</span>
+                    <h3 class="text-xl font-semibold text-red-900 mb-2">Error Loading Profile</h3>
+                    <p class="text-red-700">Failed to load profile information. Please try again later.</p>
+                </div>
+            `;
+        }
+
+        // Mark request as accepted in localStorage
+        function markRequestAsAccepted(requestId) {
+            if (!currentUserId || !requestId) {
+                console.warn('Cannot mark request as accepted: Missing user_id or request_id', { currentUserId, requestId });
+                return;
+            }
+            try {
+                const acceptedKey = `acceptedRequests_${currentUserId}`;
+                let acceptedRequests = JSON.parse(localStorage.getItem(acceptedKey) || '[]');
+                if (!acceptedRequests.includes(requestId)) {
+                    acceptedRequests.push(requestId);
+                    localStorage.setItem(acceptedKey, JSON.stringify(acceptedRequests));
+                    console.log('Request marked as accepted:', requestId, 'New accepted list:', acceptedRequests);
+                }
+            } catch (error) {
+                console.error('Error marking request as accepted in localStorage:', error.message);
+            }
+        }
+
+        // Fetch and display matching blood requests
+        async function loadRequests() {
+            console.log('Loading requests...');
+            if (!currentUserProfile || !currentUserProfile.blood_group || !currentUserId) {
+                console.warn('Cannot load requests: Missing user profile or blood group', { currentUserProfile, currentUserId });
+                displayNoRequests('Missing profile or blood group information.');
+                return;
+            }
+
+            try {
+                if (!supabase) {
+                    throw new Error('Supabase client not initialized');
+                }
+                const ineligibleKey = `ineligibleRequests_${currentUserId}`;
+                const ineligibleRequests = JSON.parse(localStorage.getItem(ineligibleKey) || '[]');
+                console.log('Ineligible requests:', ineligibleRequests);
+
+                const { data, error } = await supabase
+                    .from('sos_requests')
+                    .select('*')
+                    .eq('requested_blood_group', currentUserProfile.blood_group.toUpperCase())
+                    .gt('required_units', 0);
+
+                if (error) {
+                    console.error('Supabase error:', error);
+                    throw new Error(`Requests fetch error: ${error.message} (code: ${error.code})`);
+                }
+
+                console.log('Fetched requests:', data);
+
+                if (data && data.length > 0) {
+                    const filteredRequests = data.filter(request => !ineligibleRequests.includes(request.id));
+                    console.log('Filtered requests:', filteredRequests);
+                    if (filteredRequests.length > 0) {
+                        displayRequests(filteredRequests);
+                    } else {
+                        console.warn('All requests filtered out as ineligible');
+                        displayNoRequests('No eligible requests available.');
+                    }
+                } else {
+                    console.warn('No matching requests found for blood group:', currentUserProfile.blood_group);
+                    displayNoRequests(`No blood requests found for your blood type (${currentUserProfile.blood_group}).`);
+                }
+            } catch (error) {
+                console.error('Error fetching requests:', error.message);
+                displayRequestsError();
+            }
+        }
+
+        // Display blood requests
+        function displayRequests(requests) {
+            const requestsSection = document.getElementById('requestsSection');
+            const acceptedKey = `acceptedRequests_${currentUserId}`;
+            const acceptedRequests = JSON.parse(localStorage.getItem(acceptedKey) || '[]');
+            const requestsHTML = requests.map((request, index) => {
+                const isAccepted = acceptedRequests.includes(request.id);
+                let buttonsHTML = '';
+                if (!isAccepted) {
+                    buttonsHTML = `
+                        <button class="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-bold animate-ripple animate-pulse-glow flex items-center justify-center gap-2 more-info" data-request-id="${request.id}">
+                            <span class="material-symbols-outlined animate-icon-float">info</span>
+                            More Info
+                        </button>
+                        <button class="flex-1 bg-red-600 text-white py-3 px-6 rounded-lg font-bold animate-ripple animate-pulse-glow flex items-center justify-center gap-2 accept-request" data-request-id="${request.id}">
+                            <span class="material-symbols-outlined animate-icon-float">volunteer_activism</span>
+                            Accept Request
+                        </button>
+                    `;
+                } else {
+                    buttonsHTML = `
+                        <button class="flex-1 btn-accepted text-white py-3 px-6 rounded-lg font-bold animate-ripple animate-pulse-glow flex items-center justify-center gap-2" data-request-id="${request.id}" disabled>
+                            <span class="material-symbols-outlined animate-icon-float">check_circle</span>
+                            Accepted
+                        </button>
+                        <button class="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-bold animate-ripple animate-pulse-glow flex items-center justify-center gap-2 map-button" data-request-id="${request.id}" data-hospital-name="${request.hospital_name}">
+                            <span class="material-symbols-outlined animate-icon-float">map</span>
+                            View Map
+                        </button>
+                    `;
+                }
+
+                return `
+                <div class="request-card bg-white rounded-lg shadow-lg p-6 mb-4 animate-fade-slide" style="animation-delay: ${index * 0.2}s;" data-request-id="${request.id}">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-3xl text-red-600 animate-icon-float">emergency</span>
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900">${request.patient_name}</h3>
+                                <p class="text-sm text-gray-600">${request.hospital_name}</p>
+                            </div>
+                        </div>
+                        <div class="urgency-${request.urgency_level?.toLowerCase() || 'medium'} text-white px-3 py-1 rounded-full text-sm font-bold animate-pulse-glow">
+                            ${request.urgency_level || 'MEDIUM'} URGENCY
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-red-600 animate-icon-float">water_drop</span>
+                            <span class="font-semibold">Blood Type: ${request.requested_blood_group}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-blue-600 animate-icon-float">medical_services</span>
+                            <span>Units: ${request.required_units || 'Not specified'}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-purple-600 animate-icon-float">wc</span>
+                            <span>Gender: ${request.gender || 'Not specified'}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-orange-600 animate-icon-float">monitor_weight</span>
+                            <span>Weight: ${request.weight || 'Not specified'} kg</span>
+                        </div>
+                    </div>
+                    ${request.health_issues ? `
+                        <div class="mb-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200 animate-fade-slide" style="animation-delay: ${index * 0.2 + 0.1}s;">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="material-symbols-outlined text-yellow-600 animate-icon-float">warning</span>
+                                <span class="font-semibold text-yellow-800">Health Issues:</span>
+                            </div>
+                            <p class="text-yellow-700">${request.health_issues}</p>
+                        </div>
+                    ` : ''}
+                    <div class="mb-4 p-3 bg-gray-50 rounded-lg animate-fade-slide" style="animation-delay: ${index * 0.2 + 0.1}s;">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="material-symbols-outlined text-gray-600 animate-icon-float">location_on</span>
+                            <span class="font-semibold text-gray-800">Address:</span>
+                        </div>
+                        <p class="text-gray-700">${request.patient_address || 'Address not provided'}</p>
+                    </div>
+                    <div class="flex gap-3">
+                        ${buttonsHTML}
+                    </div>
+                </div>
+            `;
+            }).join('');
+
+            requestsSection.innerHTML = `
+                <div class="mb-4 animate-fade-slide">
+                    <p class="text-lg text-gray-600">Found ${requests.length} matching request(s) for blood type <span class="blood-type-badge animate-pulse-glow">${currentUserProfile.blood_group}</span></p>
+                </div>
+                ${requestsHTML}
+            `;
+
+            document.querySelectorAll('.accept-request').forEach(button => {
+                button.addEventListener('click', () => {
+                    console.log('Accept Request clicked for ID:', button.dataset.requestId);
+                    openEligibilityModal(button.dataset.requestId);
+                });
+            });
+
+            document.querySelectorAll('.more-info').forEach(button => {
+                button.addEventListener('click', () => {
+                    console.log('More Info clicked for request ID:', button.dataset.requestId);
+                    openRequestInfoModal(button.dataset.requestId);
+                });
+            });
+
+            document.querySelectorAll('.map-button').forEach(button => {
+                button.addEventListener('click', async () => {
+                    console.log('View Map clicked for request ID:', button.dataset.requestId);
+                    const hospitalName = button.dataset.hospitalName;
+                    const requestId = button.dataset.requestId;
+
+                    try {
+                        const { data: hospital, error } = await supabase
+                            .from('hospitals')
+                            .select('hospital_name, latitude, longitude, address')
+                            .eq('hospital_name', hospitalName)
+                            .single();
+
+                        if (error) {
+                            throw error;
+                        }
+
+                        if (hospital) {
+                            const params = new URLSearchParams({
+                                hospitalName: hospital.hospital_name,
+                                lat: hospital.latitude,
+                                lng: hospital.longitude,
+                                address: hospital.address || 'No address available',
+                                requestId: requestId
+                            });
+                            window.location.href = `map.html?${params.toString()}`;
+                        } else {
+                            alert('Hospital details not found in database.');
+                        }
+                    } catch (err) {
+                        console.error('Error fetching hospital details:', err.message);
+                        alert('Error fetching hospital details. Please try again.');
+                    }
+                });
+            });
+        }
+
+        // Display no requests message
+        function displayNoRequests(message = 'There are currently no blood requests matching your blood type.') {
+            const requestsSection = document.getElementById('requestsSection');
+            requestsSection.innerHTML = `
+                <div class="text-center p-8 bg-white rounded-lg shadow-lg animate-fade-slide">
+                    <span class="material-symbols-outlined text-6xl text-gray-400 mb-4 animate-icon-float">search_off</span>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">No Matching Requests</h3>
+                    <p class="text-gray-600">${message}</p>
+                </div>
+            `;
+        }
+
+        // Display requests error
+        function displayRequestsError() {
+            const requestsSection = document.getElementById('requestsSection');
+            requestsSection.innerHTML = `
+                <div class="text-center p-8 bg-red-50 rounded-lg border border-red-200 animate-fade-slide">
+                    <span class="material-symbols-outlined text-6xl text-red-500 mb-4 animate-icon-float">error</span>
+                    <h3 class="text-xl font-semibold text-red-900 mb-2">Error Loading Requests</h3>
+                    <p class="text-red-700">Failed to load blood requests. Please check your connection or try again later.</p>
+                </div>
+            `;
+        }
+
+        // Modal handling
+        function openEligibilityModal(requestId) {
+            console.log('Opening eligibility modal for request ID:', requestId);
+            const modal = document.getElementById('eligibilityModal');
+            modal.style.display = 'block';
+            modal.dataset.requestId = requestId;
+            setTimeout(() => {
+                modal.style.opacity = '1';
+            }, 10);
+
+            // Reset form
+            const form = document.getElementById('eligibilityForm');
+            form.reset();
+            document.getElementById('current-question').textContent = '0';
+            document.getElementById('progress-fill').style.width = '0%';
+            document.getElementById('formError').style.display = 'none';
+            document.querySelectorAll('.radio-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+        }
+
+        function closeEligibilityModal() {
+            console.log('Closing eligibility modal');
+            const modal = document.getElementById('eligibilityModal');
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        function closeResultModal() {
+            console.log('Closing result modal');
+            const modal = document.getElementById('resultModal');
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        async function openRequestInfoModal(requestId) {
+            console.log('Opening request info modal for ID:', requestId);
+            try {
+                const { data, error } = await supabase
+                    .from('sos_requests')
+                    .select('*')
+                    .eq('id', requestId)
+                    .single();
+
+                if (error) {
+                    console.error('Error fetching request details:', error);
+                    alert('Failed to load request details. Please try again.');
+                    return;
+                }
+
+                const detailsContainer = document.getElementById('requestDetails');
+                detailsContainer.innerHTML = `
+                    <div class="question-group">
+                        <div class="question">Patient Name</div>
+                        <p>${data.patient_name || 'Not provided'}</p>
+                    </div>
+                    <div class="question-group">
+                        <div class="question">Hospital Name</div>
+                        <p>${data.hospital_name || 'Not provided'}</p>
+                    </div>
+                    <div class="question-group">
+                        <div class="question">Blood Group</div>
+                        <p>${data.requested_blood_group || 'Not provided'}</p>
+                    </div>
+                    <div class="question-group">
+                        <div class="question">Required Units</div>
+                        <p>${data.required_units || 'Not provided'}</p>
+                    </div>
+                    <div class="question-group">
+                        <div class="question">Gender</div>
+                        <p>${data.gender || 'Not provided'}</p>
+                    </div>
+                    <div class="question-group">
+                        <div class="question">Weight</div>
+                        <p>${data.weight || 'Not provided'} kg</p>
+                    </div>
+                    <div class="question-group">
+                        <div class="question">Health Issues</div>
+                        <p>${data.health_issues || 'None reported'}</p>
+                    </div>
+                    <div class="question-group">
+                        <div class="question">Patient Address</div>
+                        <p>${data.patient_address || 'Not provided'}</p>
+                    </div>
+                    <div class="question-group">
+                        <div class="question">Urgency Level</div>
+                        <p>${data.urgency_level || 'Not provided'}</p>
+                    </div>
+                    <!-- Add more fields as available in your table -->
+                `;
+
+                const modal = document.getElementById('requestInfoModal');
+                modal.style.display = 'block';
+                setTimeout(() => {
+                    modal.style.opacity = '1';
+                }, 10);
+            } catch (err) {
+                console.error('Error opening request info modal:', err.message);
+                alert('Error loading request details.');
+            }
+        }
+
+        function closeRequestInfoModal() {
+            console.log('Closing request info modal');
+            const modal = document.getElementById('requestInfoModal');
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        // Track progress
+        function updateProgress() {
+            const totalQuestions = 11;
+            const answeredQuestions = document.querySelectorAll('#eligibilityForm input[type="radio"]:checked').length;
+            const progressPercent = (answeredQuestions / totalQuestions) * 100;
+            document.getElementById('current-question').textContent = answeredQuestions;
+            document.getElementById('progress-fill').style.width = progressPercent + '%';
+            console.log('Progress updated:', answeredQuestions, 'of', totalQuestions);
+        }
+
+        // Form validation and eligibility check
+        async function checkEligibility(e) {
+            e.preventDefault();
+            console.log('checkEligibility function called');
+            const form = document.getElementById('eligibilityForm');
+            const modalContent = document.querySelector('#eligibilityModal .modal-content');
+            const totalQuestions = 11;
+            const answeredQuestions = document.querySelectorAll('#eligibilityForm input[type="radio"]:checked').length;
+            const formError = document.getElementById('formError');
+
+            console.log('Form validation:', { answeredQuestions, totalQuestions });
+
+            if (answeredQuestions < totalQuestions) {
+                formError.style.display = 'block';
+                console.log('Validation failed: Not all questions answered', { answeredQuestions, totalQuestions });
+                modalContent.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            formError.style.display = 'none';
+            const formData = new FormData(form);
+            let allNoAnswers = true;
+
+            // Check all questions (q1 to q11) for "No" answers
+            for (let i = 1; i <= 11; i++) {
+                if (formData.get(`q${i}`) !== 'no') {
+                    allNoAnswers = false;
+                    console.log(`Question ${i} answered '${formData.get(`q${i}`)}'`);
+                    break;
+                }
+            }
+
+            const requestId = document.getElementById('eligibilityModal').dataset.requestId;
+            console.log('Eligibility check for request ID:', requestId);
+            await showResult(allNoAnswers, requestId);
+            modalContent.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Exclude request for the user using localStorage
+        function excludeRequest(requestId) {
+            if (!currentUserId || !requestId) {
+                console.warn('Cannot exclude request: Missing user_id or request_id', { currentUserId, requestId });
+                return;
+            }
+
+            try {
+                const ineligibleKey = `ineligibleRequests_${currentUserId}`;
+                let ineligibleRequests = JSON.parse(localStorage.getItem(ineligibleKey) || '[]');
+                if (!ineligibleRequests.includes(requestId)) {
+                    ineligibleRequests.push(requestId);
+                    localStorage.setItem(ineligibleKey, JSON.stringify(ineligibleRequests));
+                    console.log('Request excluded:', requestId, 'New ineligible list:', ineligibleRequests);
+                }
+                loadRequests();
+            } catch (error) {
+                console.error('Error excluding request in localStorage:', error.message);
+            }
+        }
+
+        // Decrement required_units in the database
+        async function decrementRequestUnits(requestId) {
+            try {
+                const { data, error } = await supabase
+                    .from('sos_requests')
+                    .select('required_units')
+                    .eq('id', requestId)
+                    .single();
+
+                if (error) {
+                    throw new Error(`Error fetching units: ${error.message}`);
+                }
+
+                if (!data || data.required_units <= 0) {
+                    console.warn('Cannot decrement: Units already 0 or request not found', { requestId });
+                    return;
+                }
+
+                const newUnits = data.required_units - 1;
+                let updateData = { required_units: newUnits };
+                if (newUnits === 0) {
+                    updateData.status = 'fulfilled';
+                }
+
+                const { error: updateError } = await supabase
+                    .from('sos_requests')
+                    .update(updateData)
+                    .eq('id', requestId);
+
+                if (updateError) {
+                    throw new Error(`Error updating units: ${updateError.message}`);
+                }
+
+                console.log('Units decremented successfully for request ID:', requestId, 'New units:', newUnits);
+                if (newUnits === 0) {
+                    console.log('Request status updated to fulfilled for ID:', requestId);
+                }
+            } catch (error) {
+                console.error('Failed to decrement units:', error.message);
+            }
+        }
+
+        // Show eligibility result
+        async function showResult(isEligible, requestId) {
+            console.log('Showing result, isEligible:', isEligible, 'requestId:', requestId);
+            const modal = document.getElementById('resultModal');
+            const modalContent = document.querySelector('#resultModal .modal-content');
+            const modalIcon = document.getElementById('modalIcon');
+            const modalEmoji = document.getElementById('modalEmoji');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
+            const modalButton = document.getElementById('modalButton');
+
+            if (isEligible) {
+                await decrementRequestUnits(requestId);
+                markRequestAsAccepted(requestId);
+                modalIcon.className = 'modal-icon success';
+                modalEmoji.textContent = '✅';
+                modalTitle.textContent = 'Congratulations!';
+                modalMessage.textContent = 'You are eligible to donate blood for this request. Thank you for your willingness to save lives!';
+                modalButton.textContent = 'Got it';
+                modalButton.onclick = function() {
+                    console.log('Got it clicked for request ID:', requestId);
+                    closeResultModal();
+                    closeEligibilityModal();
+                    loadRequests();
+                };
+            } else {
+                modalIcon.className = 'modal-icon error';
+                modalEmoji.textContent = '❌';
+                modalTitle.textContent = 'Not Eligible';
+                modalMessage.textContent = 'We regret to inform you that, based on your responses, you are currently not eligible to donate blood for this request. Please consult a healthcare provider for further guidance.';
+                modalButton.textContent = 'Close';
+                modalButton.onclick = function() {
+                    console.log('Close result modal clicked, excluding request ID:', requestId);
+                    excludeRequest(requestId);
+                    closeResultModal();
+                    closeEligibilityModal();
+                };
+            }
+
+            modal.style.display = 'block';
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modalContent.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 10);
+        }
+
+        // Load all data and set up event listeners
+        window.addEventListener('DOMContentLoaded', async () => {
+            console.log('DOM content loaded');
+            try {
+                await loadProfile();
+                await loadRequests();
+            } catch (error) {
+                console.error('Error during initial load:', error.message);
+                displaySupabaseError();
+            }
+
+            const eligibilityForm = document.getElementById('eligibilityForm');
+            if (eligibilityForm) {
+                eligibilityForm.addEventListener('submit', (e) => {
+                    console.log('Form submit event triggered');
+                    checkEligibility(e);
+                });
+                console.log('Form submit listener attached');
+            } else {
+                console.error('Eligibility form not found in DOM');
+            }
+
+            const radioButtons = document.querySelectorAll('#eligibilityForm input[type="radio"]');
+            const totalQuestions = document.querySelectorAll('.question-group').length;
+            document.getElementById('total-questions').textContent = totalQuestions;
+            console.log('Total questions:', totalQuestions);
+
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    updateProgress();
+                    document.getElementById('formError').style.display = 'none';
+                    const radioOptions = document.querySelectorAll(`#eligibilityForm input[name="${this.name}"]`);
+                    radioOptions.forEach(option => {
+                        option.closest('.radio-option').classList.remove('selected');
+                    });
+                    this.closest('.radio-option').classList.add('selected');
+                    console.log('Radio changed:', this.name, this.value);
+                });
+            });
+
+            const eligibilityModal = document.getElementById('eligibilityModal');
+            if (eligibilityModal) {
+                eligibilityModal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        console.log('Clicked outside eligibility modal');
+                        closeEligibilityModal();
+                    }
+                });
+            } else {
+                console.error('Eligibility modal not found in DOM');
+            }
+
+            const resultModal = document.getElementById('resultModal');
+            if (resultModal) {
+                resultModal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        console.log('Clicked outside result modal');
+                        closeResultModal();
+                    }
+                });
+            } else {
+                console.error('Result modal not found in DOM');
+            }
+
+            const requestInfoModal = document.getElementById('requestInfoModal');
+            if (requestInfoModal) {
+                requestInfoModal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        console.log('Clicked outside request info modal');
+                        closeRequestInfoModal();
+                    }
+                });
+            } else {
+                console.error('Request info modal not found in DOM');
+            }
+
+            const checkEligibilityButton = document.getElementById('checkEligibilityButton');
+            if (checkEligibilityButton) {
+                checkEligibilityButton.addEventListener('click', () => {
+                    console.log('Check Eligibility button clicked');
+                    const form = document.getElementById('eligibilityForm');
+                    if (form) {
+                        console.log('Manually triggering form submit');
+                        form.dispatchEvent(new Event('submit', { cancelable: true }));
+                    } else {
+                        console.error('Form not found when clicking Check Eligibility button');
+                    }
+                });
+            } else {
+                console.error('Check Eligibility button not found in DOM');
+            }
+
+            document.querySelectorAll('.question-group').forEach((group, index) => {
+                setTimeout(() => {
+                    group.classList.add('fade-in');
+                }, index * 100);
+            });
+
+            // Logout handler
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    localStorage.removeItem('userId');
+                    localStorage.removeItem('userName');
+                    window.location.replace('/donor_login');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
