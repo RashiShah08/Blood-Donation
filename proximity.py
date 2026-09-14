@@ -8,9 +8,9 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 # Load environment variables
-env_file = "detail.env"  # Change to ".env" if you prefer a standard name
+env_file = ".env"  # Copy .env.example to .env and fill in your values
 if not os.path.exists(env_file):
-    raise FileNotFoundError(f"Environment file {env_file} not found")
+    raise FileNotFoundError(f"Environment file {env_file} not found (copy .env.example to .env)")
 
 load_dotenv(env_file)
 
