@@ -4,7 +4,7 @@ import sys
 import os
 import time
 
-app = Flask(__name__, template_folder="Template")
+app = Flask(__name__, template_folder="templates")
 app.secret_key = os.urandom(24).hex()
 
 # Start proximity.py as a subprocess
