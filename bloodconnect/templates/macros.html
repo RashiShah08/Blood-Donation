@@ -1,0 +1,140 @@
+{% macro icon(name, class="") -%}
+<svg class="icon {{ class }}" aria-hidden="true" focusable="false"><use href="{{ url_for('static', filename='img/icons.svg') }}#{{ name }}"></use></svg>
+{%- endmacro %}
+
+{% macro csrf() -%}
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{%- endmacro %}
+
+{% macro nav_link(endpoint, label) -%}
+<li><a href="{{ url_for(endpoint) }}"{% if request.endpoint == endpoint %} aria-current="page"{% endif %}>{{ label }}</a></li>
+{%- endmacro %}
+
+{% macro side_link(endpoint, label, icon_name, live=false) -%}
+<li><a href="{{ url_for(endpoint) }}"{% if request.endpoint == endpoint %} aria-current="page"{% endif %}>{{ icon(icon_name) }}<span>{{ label }}</span>{% if live %}<span class="live-dot" aria-hidden="true"></span>{% endif %}</a></li>
+{%- endmacro %}
+
+{% macro initials(name) -%}
+{%- for word in name.split()[:2] %}{{ word[0]|upper }}{% endfor -%}
+{%- endmacro %}
+
+{% macro flashes(class="") -%}
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="flashes {{ class }}">
+    {% for category, message in messages %}
+    <div class="alert alert-{{ 'error' if category == 'error' else 'success' }}" role="{{ 'alert' if category == 'error' else 'status' }}">
+      {{ icon('alert' if category == 'error' else 'check') }}<p>{{ message }}</p>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+{%- endmacro %}
+
+{% macro kpi(key, label, value, note=None, icon_name=None, value_attrs="", value_class="") -%}
+<div class="kpi" data-kpi="{{ key }}">
+  <p class="kpi-label">{% if icon_name %}{{ icon(icon_name) }}{% endif %}{{ label }}</p>
+  <p class="kpi-value{{ " " ~ value_class if value_class }}"{{ value_attrs|safe }}>{{ value }}</p>
+  {% if note %}<p class="kpi-note">{{ note }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro field_error(errors, name) -%}
+{% if errors and errors.get(name) %}<p class="field-error" id="{{ name }}-error">{{ errors[name] }}</p>{% endif %}
+{%- endmacro %}
+
+{% macro described_by(errors, name, hint) -%}
+{%- set ids = [] -%}
+{%- if hint %}{% set _ = ids.append(name ~ '-hint') %}{% endif -%}
+{%- if errors and errors.get(name) %}{% set _ = ids.append(name ~ '-error') %}{% endif -%}
+{%- if ids %} aria-describedby="{{ ids|join(' ') }}"{% endif -%}
+{%- if errors and errors.get(name) %} aria-invalid="true"{% endif -%}
+{%- endmacro %}
+
+{% macro input(name, label, form={}, errors={}, type="text", required=true, hint=None, autocomplete=None, min=None, max=None, step=None, maxlength=None) -%}
+<div class="field">
+  <label for="{{ name }}">{{ label }}{% if not required %} <span class="optional">(optional)</span>{% endif %}</label>
+  <input id="{{ name }}" name="{{ name }}" type="{{ type }}"
+    {%- if type != "password" %} value="{{ form.get(name, '') }}"{% endif %}
+    {%- if required %} required{% endif %}
+    {%- if autocomplete %} autocomplete="{{ autocomplete }}"{% endif %}
+    {%- if min is not none %} min="{{ min }}"{% endif %}
+    {%- if max is not none %} max="{{ max }}"{% endif %}
+    {%- if step is not none %} step="{{ step }}"{% endif %}
+    {%- if maxlength %} maxlength="{{ maxlength }}"{% endif %}
+    {{- described_by(errors, name, hint) }}>
+  {{ field_error(errors, name) }}
+  {% if hint %}<p class="hint" id="{{ name }}-hint">{{ hint }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro select(name, label, options, form={}, errors={}, required=true, placeholder="Select…", hint=None) -%}
+<div class="field">
+  <label for="{{ name }}">{{ label }}{% if not required %} <span class="optional">(optional)</span>{% endif %}</label>
+  <select id="{{ name }}" name="{{ name }}"{% if required %} required{% endif %}{{ described_by(errors, name, hint) }}>
+    <option value="" disabled{% if not form.get(name) %} selected{% endif %}>{{ placeholder }}</option>
+    {% for value, text in options %}
+    <option value="{{ value }}"{% if form.get(name)|string == value|string %} selected{% endif %}>{{ text }}</option>
+    {% endfor %}
+  </select>
+  {{ field_error(errors, name) }}
+  {% if hint %}<p class="hint" id="{{ name }}-hint">{{ hint }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro textarea(name, label, form={}, errors={}, required=false, hint=None, maxlength=None, rows=3) -%}
+<div class="field">
+  <label for="{{ name }}">{{ label }}{% if not required %} <span class="optional">(optional)</span>{% endif %}</label>
+  <textarea id="{{ name }}" name="{{ name }}" rows="{{ rows }}"{% if required %} required{% endif %}{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}{{ described_by(errors, name, hint) }}>{{ form.get(name, '') or '' }}</textarea>
+  {{ field_error(errors, name) }}
+  {% if hint %}<p class="hint" id="{{ name }}-hint">{{ hint }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro location_picker(form={}, errors={}, label="Location", hint="Tap the map to drop a pin, or use your current location.") -%}
+<fieldset class="field location-picker" data-location-picker>
+  <legend>{{ label }}</legend>
+  <p class="hint" id="location-hint">{{ hint }}</p>
+  <div class="picker-toolbar">
+    <button type="button" class="btn btn-secondary btn-small" data-use-location>{{ icon('crosshair') }} Use my current location</button>
+    <p class="picker-status" aria-live="polite"></p>
+  </div>
+  <div class="map picker-map" role="group" aria-label="Map for choosing a location"></div>
+  <details class="manual-coordinates"{% if errors and errors.get('location') %} open{% endif %}>
+    <summary>Enter coordinates instead</summary>
+    <div class="grid grid-2">
+      <div class="field">
+        <label for="latitude">Latitude</label>
+        <input id="latitude" name="latitude" type="number" step="any" min="-90" max="90" inputmode="decimal" value="{{ form.get('latitude', '') }}" required>
+      </div>
+      <div class="field">
+        <label for="longitude">Longitude</label>
+        <input id="longitude" name="longitude" type="number" step="any" min="-180" max="180" inputmode="decimal" value="{{ form.get('longitude', '') }}" required>
+      </div>
+    </div>
+  </details>
+  {% if errors and errors.get('location') %}<p class="field-error" id="location-error">{{ errors['location'] }}</p>{% endif %}
+</fieldset>
+{%- endmacro %}
+
+{% macro urgency_badge(level) -%}
+<span class="badge badge-urgency-{{ level }}">{{ level|capitalize }} urgency</span>
+{%- endmacro %}
+
+{% macro status_badge(status) -%}
+{%- set labels = {"open": "Open", "fulfilled": "Fulfilled", "cancelled": "Cancelled", "pledged": "Pledged", "arrived": "Arrived", "donated": "Donated", "no_show": "Didn't arrive"} -%}
+<span class="badge badge-status-{{ status }}">{{ labels.get(status, status|capitalize) }}</span>
+{%- endmacro %}
+
+{% macro blood_badge(group, class="") -%}
+<span class="blood-badge {{ class }}"><span class="visually-hidden">Blood group </span>{{ group }}</span>
+{%- endmacro %}
+
+{% macro leaflet_css() -%}
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet/leaflet.css') }}">
+{%- endmacro %}
+
+{% macro leaflet_js() -%}
+<script src="{{ url_for('static', filename='vendor/leaflet/leaflet.js') }}" defer></script>
+{%- endmacro %}

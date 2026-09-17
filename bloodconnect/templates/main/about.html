@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}About{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div class="container">
+    <div class="page-header-inner">
+      <p class="eyebrow">About</p>
+      <h1>Shortening the time between a need and a donor</h1>
+      <p class="lead">BloodConnect is an open-source platform that helps hospitals reach compatible donors nearby, and helps those donors get there.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section section-tight">
+  <div class="container doc">
+    <article class="prose">
+      <h2 id="why">Why we built it</h2>
+      <p>When a patient needs blood urgently, hospitals and families often rely on phone calls and social media posts to find donors. Those messages reach people who may not be compatible, not nearby, or not eligible to donate yet. BloodConnect sends each request only to donors who can actually help.</p>
+
+      <h2 id="what-it-does">What it does</h2>
+      <ul>
+        <li>Matches requests to donors by red cell compatibility, distance, availability and donation interval.</li>
+        <li>Alerts donors by email, at most once per request.</li>
+        <li>Runs a short eligibility check based on India's national guidelines before a donor pledges.</li>
+        <li>Gives donors directions to the hospital, and gives hospitals a live console of who's coming and when.</li>
+      </ul>
+
+      <h2 id="what-it-doesnt">What it doesn't do</h2>
+      <ul>
+        <li>It doesn't replace emergency services, blood banks or medical screening.</li>
+        <li>It doesn't pay donors or sell blood.</li>
+      </ul>
+
+      <h2 id="project">The project</h2>
+      <p>BloodConnect began as a hackathon project at Ignite IT 7.0. The source code is on <a href="https://github.com/RashiShah08/Blood-Donation" rel="noopener">GitHub</a>, where you can report issues and suggest improvements.</p>
+    </article>
+    <nav class="toc" aria-label="On this page" data-toc>
+      <p class="toc-title">On this page</p>
+      <a href="#why">Why we built it</a>
+      <a href="#what-it-does">What it does</a>
+      <a href="#what-it-doesnt">What it doesn't do</a>
+      <a href="#project">The project</a>
+    </nav>
+  </div>
+</section>
+{% endblock %}

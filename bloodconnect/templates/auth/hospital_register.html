@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block surface %}product{% endblock %}
+{% block theme_color %}#f6f6f8{% endblock %}
+{% block title %}Register a hospital{% endblock %}
+{% block head %}{{ ui.leaflet_css() }}{% endblock %}
+{% block content %}
+<section class="section section-tight">
+  <div class="container">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">For blood banks and hospitals</p>
+        <h1>Register a hospital</h1>
+        <p class="lead">Create requests and reach compatible donors near your hospital in minutes.</p>
+      </div>
+    </div>
+
+    {% if errors %}
+    <div class="alert alert-error" role="alert">{{ ui.icon('alert') }}<p>Please fix the {{ errors|length }} highlighted {{ 'problem' if errors|length == 1 else 'problems' }} below.</p></div>
+    {% endif %}
+
+    <div class="split">
+      <form method="post" class="card form-card stack" id="hospital-register-form" novalidate>
+        {{ ui.csrf() }}
+        <fieldset class="form-section">
+          <legend>Hospital details</legend>
+          <div class="grid grid-2">
+            {{ ui.input('name', 'Hospital name', form, errors, autocomplete='organization', maxlength=160) }}
+            {{ ui.select('hospital_type', 'Type', hospital_types.items(), form, errors) }}
+            {{ ui.input('email', 'Email', form, errors, type='email', autocomplete='email', hint='Used to log in and for password resets.') }}
+            {{ ui.input('phone', 'Phone number', form, errors, type='tel', autocomplete='tel', hint='Shown to donors who pledge.') }}
+          </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+          <legend>Address</legend>
+          {{ ui.input('address', 'Street address', form, errors, autocomplete='street-address', maxlength=255) }}
+          <div class="grid grid-2">
+            {{ ui.input('city', 'City', form, errors, autocomplete='address-level2') }}
+            {{ ui.input('state', 'State', form, errors, autocomplete='address-level1') }}
+            {{ ui.input('pincode', 'Pincode', form, errors, autocomplete='postal-code') }}
+            {{ ui.input('country', 'Country', form if form.get('country') else {'country': 'India'}, errors, autocomplete='country-name') }}
+          </div>
+          {{ ui.location_picker(form, errors, label='Location on the map', hint='Place the pin on your hospital entrance. Donors are routed to this point.') }}
+        </fieldset>
+
+        <fieldset class="form-section">
+          <legend>Account security</legend>
+          <div class="grid grid-2">
+            {{ ui.input('password', 'Password', form, errors, type='password', autocomplete='new-password', hint='At least 8 characters.') }}
+            {{ ui.input('confirm_password', 'Confirm password', form, errors, type='password', autocomplete='new-password') }}
+          </div>
+          <div class="strength" data-strength-for="password" aria-live="polite" hidden>
+            <div class="strength-bar" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+            <p class="strength-text" data-strength-text></p>
+          </div>
+        </fieldset>
+
+        <div class="field checkbox-field">
+          <input type="checkbox" id="consent" name="consent"{% if form.get('consent') == 'on' %} checked{% endif %} required{{ ui.described_by(errors, 'consent', None) }}>
+          <label for="consent">I'm authorised to register this hospital, and I agree to the <a href="{{ url_for('main.terms') }}">terms of use</a> and <a href="{{ url_for('main.privacy') }}">privacy policy</a>.</label>
+          {{ ui.field_error(errors, 'consent') }}
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-large btn-block">Register hospital</button>
+        <p class="auth-switch">Already registered? <a href="{{ url_for('auth.hospital_login') }}">Log in</a></p>
+      </form>
+
+      <aside class="sticky-aside desktop-only" aria-label="Registration progress">
+        <div class="card completeness" data-completeness="hospital-register-form">
+          <h2 class="card-title">{{ ui.icon('check') }} <span data-completeness-count>0 of 5 done</span></h2>
+          <progress max="5" value="0" data-completeness-bar aria-label="Registration progress"></progress>
+          <ul>
+            <li data-fields="name hospital_type email phone">Hospital details</li>
+            <li data-fields="address city state pincode country">Address</li>
+            <li data-fields="latitude longitude">Entrance on the map</li>
+            <li data-fields="password confirm_password">A password (twice)</li>
+            <li data-fields="consent">Agree to the terms</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h2 class="card-title">{{ ui.icon('activity') }} What you get</h2>
+          <ul class="checklist small">
+            <li>Search compatible donors within 2 to 25 km</li>
+            <li>One-click alerts, never sent twice</li>
+            <li>A live console with donor arrival times</li>
+            <li>A <kbd>Ctrl</kbd> <kbd>K</kbd> command palette to move fast</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+{{ ui.leaflet_js() }}
+<script src="{{ url_for('static', filename='js/location-picker.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/forms.js') }}" defer></script>
+{% endblock %}

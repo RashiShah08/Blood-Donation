@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+{% block head %}{{ ui.leaflet_css() }}{% endblock %}
+{% block content %}
+<section class="section section-tight">
+  <div class="container">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">Profile</p>
+        <h1>Your details</h1>
+        <p class="muted">Email: {{ current_donor.email }} · Blood group: {{ current_donor.blood_group }} · Date of birth: {{ current_donor.date_of_birth|datefmt }}</p>
+      </div>
+    </div>
+
+    {% if errors %}
+    <div class="alert alert-error" role="alert">{{ ui.icon('alert') }}<p>Please fix the highlighted fields below.</p></div>
+    {% endif %}
+
+    <div class="split">
+      <form method="post" class="card form-card stack" novalidate>
+        {{ ui.csrf() }}
+        <div class="grid grid-2">
+          {{ ui.input('name', 'Full name', form, errors, autocomplete='name', maxlength=120) }}
+          {{ ui.input('phone', 'Phone number', form, errors, type='tel', required=false, autocomplete='tel') }}
+          {{ ui.input('weight_kg', 'Weight (kg)', form, errors, type='number', min=20, max=250, step='0.1') }}
+          {{ ui.select('health_issues', 'Ongoing health condition', health_issues.items(), form, errors) }}
+          {{ ui.input('last_donation_date', 'Last blood donation', form, errors, type='date', required=false, hint='Include donations made anywhere, so we know when you can donate again.') }}
+        </div>
+        {{ ui.location_picker(form, errors, label='Home area') }}
+        <button type="submit" class="btn btn-primary">Save changes</button>
+      </form>
+
+      <aside class="sticky-aside">
+        <div class="card">
+          <h2 class="card-title">{{ ui.icon('info') }} Can't edit something?</h2>
+          <p class="muted small">Your email, blood group and date of birth are fixed so hospitals can trust them. To change them, delete this account and register again.</p>
+        </div>
+        <section class="card danger-zone" aria-labelledby="delete-heading" style="margin-top:0">
+          <h2 id="delete-heading" class="card-title">{{ ui.icon('trash') }} Delete account</h2>
+          <p class="small">This permanently deletes your profile, pledges and donation history. Any active pledges are cancelled first.</p>
+          <form method="post" action="{{ url_for('donor.delete_account') }}" class="stack" data-confirm="Delete your account permanently? This can't be undone.">
+            {{ ui.csrf() }}
+            {{ ui.input('password', 'Confirm with your password', type='password', autocomplete='current-password') }}
+            <button type="submit" class="btn btn-danger">{{ ui.icon('trash') }} Delete my account</button>
+          </form>
+        </section>
+      </aside>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+{{ ui.leaflet_js() }}
+<script src="{{ url_for('static', filename='js/location-picker.js') }}" defer></script>
+{% endblock %}

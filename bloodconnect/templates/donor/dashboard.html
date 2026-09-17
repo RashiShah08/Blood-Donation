@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Donor dashboard{% endblock %}
+{% block content %}
+<section class="section section-tight">
+  <div class="container">
+    <div class="welcome">
+      <div>
+        <p class="eyebrow">Donor dashboard</p>
+        <h1>Hi, <span class="accent-serif">{{ donor.name.split(' ')[0] }}</span></h1>
+        <p class="lead">Blood group {{ ui.blood_badge(donor.blood_group) }} · You can give to {{ can_give_to|join(', ') }}</p>
+        <div class="cluster">
+          {% if eligibility.eligible %}
+            <span class="chip chip-success">{{ ui.icon('check') }} You can donate now</span>
+          {% else %}
+            <span class="chip chip-warning">{{ ui.icon('clock') }} Not able to donate right now</span>
+          {% endif %}
+          <form method="post" action="{{ url_for('donor.set_availability') }}" class="availability" data-availability data-api-url="{{ url_for('donor.availability_api') }}">
+            {{ ui.csrf() }}
+            <input type="hidden" name="available" value="{{ 'no' if donor.is_available else 'yes' }}">
+            <button type="submit" class="switch" role="switch" aria-checked="{{ 'true' if donor.is_available else 'false' }}">
+              <span class="switch-track" aria-hidden="true"></span>
+              <span data-switch-label>{{ 'Available for requests' if donor.is_available else 'Not available' }}</span>
+            </button>
+          </form>
+        </div>
+        <dl class="welcome-stats">
+          <div><dt>Donations</dt><dd>{{ donation_count }}</dd></div>
+          <div><dt>Badges</dt><dd>{{ badges_earned }}<span> / {{ badges_total }}</span></dd></div>
+          <div><dt>Next badge</dt><dd>{% if upcoming_badge %}{{ upcoming_badge.name }}<span> in {{ upcoming_badge.donations_needed - donation_count }}</span>{% else %}All earned{% endif %}</dd></div>
+        </dl>
+      </div>
+      <div class="readiness{% if readiness.ready %} is-ready{% endif %}" style="--p: {{ readiness.percent }}"
+           role="img" aria-label="{% if readiness.ready %}Ready to donate{% else %}{{ readiness.days_left }} days until you can donate again, on {{ readiness.next_date|datefmt }}{% endif %}">
+        <div class="readiness-ring" aria-hidden="true">
+          <div class="readiness-core">
+            {% if readiness.ready %}
+              <span class="readiness-group">{{ donor.blood_group }}</span>
+              <span class="readiness-label">Ready to give</span>
+            {% else %}
+              <span class="readiness-days">{{ readiness.days_left }}</span>
+              <span class="readiness-label">days to go</span>
+            {% endif %}
+          </div>
+        </div>
+        {% if not readiness.ready %}<p class="readiness-date" aria-hidden="true">Eligible {{ readiness.next_date|datefmt }}</p>{% endif %}
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="dash-main">
+        <div class="banner" data-pledge-banner hidden>
+          <span>Your pledges have changed.</span>
+          <button type="button" class="btn btn-ghost btn-small" data-reload>Refresh</button>
+        </div>
+
+        {% if active_pledges %}
+        <section aria-labelledby="pledges-heading">
+          <h2 id="pledges-heading">Your pledges</h2>
+          <ul class="card-list">
+            {% for pledge in active_pledges %}
+            {% set req = pledge.request %}
+            <li class="request-card is-pledged">
+              {{ ui.blood_badge(req.blood_group) }}
+              <div>
+                <div class="request-head"><h3>{{ req.hospital.name }}</h3>{{ ui.status_badge(pledge.status) }}{% if not req.is_open %}{{ ui.status_badge(req.status) }}{% endif %}</div>
+                <p class="request-meta">{{ req.hospital.address }}, {{ req.hospital.city }}</p>
+              </div>
+              <div class="request-actions">
+                <a class="btn btn-primary btn-small" href="{{ url_for('donor.directions', pledge_id=pledge.id) }}">{{ ui.icon('route') }} Directions</a>
+                {% if req.hospital.phone %}<a class="btn btn-secondary btn-small" href="tel:{{ req.hospital.phone }}">{{ ui.icon('phone') }} Call</a>{% endif %}
+                <form method="post" action="{{ url_for('donor.cancel_pledge', pledge_id=pledge.id) }}" data-confirm="Cancel this pledge? The hospital will look for another donor.">
+                  {{ ui.csrf() }}
+                  <button type="submit" class="btn btn-ghost btn-small btn-quiet-danger">Cancel pledge</button>
+                </form>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        </section>
+        {% endif %}
+
+        <section aria-labelledby="requests-heading"
+                 data-live-feed
+                 data-feed-url="{{ url_for('donor.feed') }}"
+                 data-pledges='{{ active_pledges|map(attribute="id")|list|tojson }}'
+                 data-pledge-statuses='{{ active_pledges|map(attribute="status")|list|tojson }}'>
+          <div class="section-head">
+            <h2 id="requests-heading">Requests you can help with</h2>
+            <div class="section-tools">
+              <span class="live-pill" data-live-state title="Updates automatically">Live</span>
+              <button type="button" class="btn btn-secondary btn-small" data-desktop-alerts hidden>{{ ui.icon('bell') }} <span data-desktop-alerts-label>Desktop alerts</span></button>
+            </div>
+          </div>
+
+          <div class="empty-state card" data-empty="unavailable"{% if donor.is_available %} hidden{% endif %}>
+            {{ ui.icon('clock', 'empty-icon') }}
+            <p>You're marked as not available, so we're not showing requests or sending alerts.</p>
+          </div>
+          <div class="empty-state card" data-empty="none"{% if not donor.is_available or matches %} hidden{% endif %}>
+            {{ ui.icon('search', 'empty-icon') }}
+            <p>There are no open requests within {{ radius_km }} km that your blood group can help with right now. New ones will appear here automatically.</p>
+          </div>
+          <p class="muted" data-list-intro{% if not matches %} hidden{% endif %}>Open requests within {{ radius_km }} km that your blood group is compatible with, most urgent first.</p>
+          <ul class="card-list" data-request-list aria-live="polite">
+            {% for match in matches %}
+            {% set req = match.request %}
+            <li class="request-card" data-request-id="{{ req.id }}" data-signature="{{ req.units_remaining }}|{{ req.urgency }}">
+              {{ ui.blood_badge(req.blood_group) }}
+              <div>
+                <div class="request-head"><h3>{{ req.hospital.name }}</h3>{{ ui.urgency_badge(req.urgency) }}</div>
+                <p class="request-meta">{{ req.hospital.city }} · {{ match.distance_km|km }} away · posted {{ req.created_at|timeago }}</p>
+                <p class="request-units"><strong>{{ req.units_remaining }}</strong> {{ 'unit' if req.units_remaining == 1 else 'units' }} still needed</p>
+              </div>
+              <div class="request-actions">
+                <a class="btn btn-primary" href="{{ url_for('donor.request_detail', request_id=req.id) }}">I can help</a>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        </section>
+      </div>
+
+      <aside class="dash-side">
+        <article class="card">
+          <h2 class="card-title">{{ ui.icon('check' if eligibility.eligible else 'clock') }} Eligibility</h2>
+          {% if eligibility.eligible %}
+            <p class="status-good">Your profile meets the basic requirements to donate.</p>
+          {% else %}
+            <ul class="reasons">{% for reason in eligibility.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+          {% endif %}
+          <p class="muted small">Next eligible: {{ next_eligible|datefmt if next_eligible else 'now' }}</p>
+        </article>
+        <article class="card">
+          <h2 class="card-title">{{ ui.icon('user') }} Profile</h2>
+          <dl class="details">
+            <div><dt>Age</dt><dd>{{ age }}</dd></div>
+            <div><dt>Weight</dt><dd>{{ '%g'|format(donor.weight_kg) }} kg</dd></div>
+            <div><dt>Health</dt><dd>{{ health_issues.get(donor.health_issues, 'None') }}</dd></div>
+            <div><dt>Last donation</dt><dd>{{ donor.last_donation_date|datefmt }}</dd></div>
+          </dl>
+          <a class="link-arrow" href="{{ url_for('donor.profile') }}">Edit profile {{ ui.icon('arrow-right') }}</a>
+        </article>
+        <article class="card">
+          <h2 class="card-title">{{ ui.icon('award') }} Your impact</h2>
+          <p class="muted">Donations, badges and your certificate of appreciation.</p>
+          <a class="link-arrow" href="{{ url_for('donor.impact') }}">View my impact {{ ui.icon('arrow-right') }}</a>
+        </article>
+      </aside>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/donor-live.js') }}" defer></script>
+{% endblock %}

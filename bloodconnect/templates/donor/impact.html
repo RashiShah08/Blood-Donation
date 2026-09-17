@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}My impact{% endblock %}
+{% block content %}
+<section class="section section-tight">
+  <div class="container">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">My impact</p>
+        <h1>Thank you for giving</h1>
+        <p class="muted">Donations recorded by hospitals through BloodConnect.</p>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      {{ ui.kpi('donations', 'Donations', donation_count, icon_name='drop') }}
+      {{ ui.kpi('badges', 'Badges earned', earned|length ~ ' of ' ~ badges|length, icon_name='award') }}
+      {{ ui.kpi('next_eligible', 'Next eligible to donate', next_eligible|datefmt if next_eligible else 'Now', icon_name='calendar') }}
+    </div>
+
+    <section class="subsection" aria-labelledby="badges-heading">
+      <h2 id="badges-heading">Badges</h2>
+      {% if upcoming %}<p class="muted">{{ upcoming.donations_needed - donation_count }} more {{ 'donation' if upcoming.donations_needed - donation_count == 1 else 'donations' }} to earn <strong>{{ upcoming.name }}</strong>.</p>{% endif %}
+      <ul class="badge-grid">
+        {% for badge in badges %}
+        {% set unlocked = badge in earned %}
+        <li class="card badge-card {{ 'is-earned' if unlocked else 'is-locked' }}">
+          {{ ui.icon('award', 'badge-icon') }}
+          <h3>{{ badge.name }}</h3>
+          <p class="small">{{ badge.description }}</p>
+          <p class="small muted">{{ 'Earned' if unlocked else 'Locked' }}</p>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="subsection" aria-labelledby="history-heading">
+      <h2 id="history-heading">Donation history</h2>
+      {% if donations %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Date</th><th scope="col">Hospital</th><th scope="col">Blood group</th></tr></thead>
+          <tbody>
+            {% for pledge in donations %}
+            <tr><td>{{ pledge.updated_at|datefmt }}</td><td>{{ pledge.request.hospital.name }}</td><td>{{ pledge.request.blood_group }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state card">{{ ui.icon('heart', 'empty-icon') }}<p>No recorded donations yet. Once a hospital confirms your donation, it will show up here.</p></div>
+      {% endif %}
+    </section>
+
+    {% if donation_count %}
+    <section class="subsection" aria-labelledby="certificate-heading">
+      <h2 id="certificate-heading">Certificate of appreciation</h2>
+      <div class="certificate card" id="certificate">
+        {{ ui.icon('drop', 'certificate-icon') }}
+        <p class="certificate-kicker">Certificate of appreciation</p>
+        <p class="certificate-name">{{ current_donor.name }}</p>
+        <p>for voluntarily donating blood {{ donation_count }} {{ 'time' if donation_count == 1 else 'times' }} through BloodConnect, helping patients in need.</p>
+        <p class="muted small">Issued {{ current_year }}</p>
+      </div>
+      <button type="button" class="btn btn-secondary" data-print>{{ ui.icon('award') }} Print or save as PDF</button>
+    </section>
+    {% endif %}
+
+    <p class="callout small">Blood donation in India is voluntary and unpaid. Badges and certificates are our way of saying thank you, never a payment.</p>
+  </div>
+</section>
+{% endblock %}

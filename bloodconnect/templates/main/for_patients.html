@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}For patients and families{% endblock %}
+{% block description %}How patients and families can get blood through their hospital using BloodConnect.{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div class="container">
+    <div class="page-header-inner">
+      <p class="eyebrow">For patients and families</p>
+      <h1>Getting blood when someone you love needs it</h1>
+      <p class="lead">Blood requests on BloodConnect are raised by hospitals, so the treating team can confirm what's needed and handle the transfusion safely.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section section-tight">
+  <div class="container doc">
+    <div class="doc-body">
+      <div class="alert alert-warning" role="note">
+        {{ ui.icon('alert') }}
+        <p><strong>In an emergency, call 112</strong> or go to the nearest emergency department. BloodConnect doesn't replace emergency services.</p>
+      </div>
+
+      <div class="prose">
+        <h2 id="how-to-get-help">How to get help</h2>
+        <ol class="numbered">
+          <li><strong>Talk to the treating doctor or the hospital's blood bank.</strong> They'll confirm the blood group and the number of units.</li>
+          <li><strong>Ask whether the hospital uses BloodConnect.</strong> If it doesn't, the hospital can register for free.</li>
+          <li><strong>The hospital posts the request</strong> and alerts compatible donors nearby.</li>
+          <li><strong>Donors pledge and go to the hospital,</strong> where the blood bank screens and tests every donation.</li>
+        </ol>
+
+        <h2 id="good-to-know">Good to know</h2>
+        <ul>
+          <li>All donated blood is screened and tested before it's used.</li>
+          <li>We can't guarantee that a donor will be available, but we help hospitals reach as many compatible donors as possible, quickly.</li>
+          <li>Patient details stay with the hospital. Donors only see the hospital, blood group, urgency and units needed.</li>
+          <li>You should never be asked to pay a donor. If anyone asks for money, tell the hospital.</li>
+        </ul>
+      </div>
+    </div>
+    <nav class="toc" aria-label="On this page" data-toc>
+      <p class="toc-title">On this page</p>
+      <a href="#how-to-get-help">How to get help</a>
+      <a href="#good-to-know">Good to know</a>
+    </nav>
+  </div>
+</section>
+{% endblock %}

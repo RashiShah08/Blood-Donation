@@ -1,0 +1,108 @@
+{% extends "hospital/_shell.html" %}
+{% block title %}Request #{{ blood_request.id }}{% endblock %}
+{% block head %}{{ ui.leaflet_css() }}{% endblock %}
+{% block breadcrumbs %}<a href="{{ url_for('hospital.dashboard') }}">Overview</a><span aria-hidden="true">/</span><span aria-current="page">Request #{{ blood_request.id }}</span>{% endblock %}
+{% block topbar_actions %}<a class="btn btn-secondary" href="{{ url_for('hospital.ops') }}#request-{{ blood_request.id }}">{{ ui.icon('activity') }} Open in live ops</a>{% endblock %}
+{% block content %}
+{% set hospital = blood_request.hospital %}
+<div class="page-head">
+  <div>
+    <h1>Request #{{ blood_request.id }}: {{ blood_request.patient_name }}</h1>
+    <p class="badge-row"><span class="muted">Posted {{ blood_request.created_at|timeago }}</span> {{ ui.urgency_badge(blood_request.urgency) }} {{ ui.status_badge(blood_request.status) }}</p>
+  </div>
+  {% if blood_request.is_open %}
+  <div class="button-row">
+    <form method="post" action="{{ url_for('hospital.close_request', request_id=blood_request.id) }}" data-confirm="Mark this request as fulfilled? Donors will no longer see it.">
+      {{ ui.csrf() }}<input type="hidden" name="outcome" value="fulfilled">
+      <button type="submit" class="btn btn-primary">{{ ui.icon('check') }} Mark fulfilled</button>
+    </form>
+    <form method="post" action="{{ url_for('hospital.close_request', request_id=blood_request.id) }}" data-confirm="Cancel this request? Any pledged donors will be released.">
+      {{ ui.csrf() }}<input type="hidden" name="outcome" value="cancelled">
+      <button type="submit" class="btn btn-secondary">Cancel request</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+
+<div class="kpi-grid">
+  {{ ui.kpi('blood_group', 'Blood group', blood_request.blood_group, note='Compatible: ' ~ compatible_groups|join(', '), icon_name='drop') }}
+  {{ ui.kpi('units_pledged', 'Units pledged', blood_request.units_pledged ~ ' / ' ~ blood_request.units_required, icon_name='users') }}
+  {{ ui.kpi('alerted', 'Donors alerted', notified_count, icon_name='mail', value_attrs=' data-notified-count') }}
+  {{ ui.kpi('patient', 'Patient', blood_request.patient_gender ~ (', ' ~ '%g'|format(blood_request.patient_weight_kg) ~ ' kg' if blood_request.patient_weight_kg else ''), note=blood_request.clinical_notes, icon_name='user', value_class='kpi-value-text') }}
+</div>
+
+{% if blood_request.is_open %}
+<section class="panel" aria-labelledby="search-heading">
+  <div class="panel-head"><h2 id="search-heading">Find and alert nearby donors</h2></div>
+  <div class="donor-search"
+       id="donor-search"
+       data-donors-url="{{ url_for('hospital.donors_api', request_id=blood_request.id) }}"
+       data-notify-url="{{ url_for('hospital.notify_api', request_id=blood_request.id) }}"
+       data-hospital-lat="{{ hospital.latitude }}"
+       data-hospital-lng="{{ hospital.longitude }}"
+       data-hospital-name="{{ hospital.name }}">
+    <div class="search-panel">
+      <div class="field">
+        <label for="radius">Search radius</label>
+        <select id="radius" name="radius" data-radius>
+          {% for radius in radii %}<option value="{{ radius }}"{% if radius == 5 %} selected{% endif %}>Within {{ radius }} km</option>{% endfor %}
+        </select>
+      </div>
+      <p class="search-summary" data-summary aria-live="polite">Searching for donors…</p>
+      <button type="button" class="btn btn-urgent btn-block" data-notify disabled>{{ ui.icon('mail') }} <span data-notify-label>Alert donors</span></button>
+      <p class="muted small">Only available donors with a compatible blood group who are eligible to donate again are shown. Positions are approximate, to protect donors' privacy.</p>
+      <ul class="donor-list" data-donor-list aria-label="Matching donors"></ul>
+    </div>
+    <div class="map search-map" data-map role="group" aria-label="Map of matching donors near your hospital"></div>
+  </div>
+</section>
+{% endif %}
+
+<section class="panel" aria-labelledby="pledges-heading">
+  <div class="panel-head"><h2 id="pledges-heading">Pledged donors</h2><span class="muted small">{{ pledges|length }} total</span></div>
+  {% if pledges %}
+  <div class="table-wrap">
+    <table class="table-cards">
+      <thead><tr><th scope="col">Donor</th><th scope="col">Blood group</th><th scope="col">Contact</th><th scope="col">Pledged</th><th scope="col">Arriving in</th><th scope="col">Status</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+      <tbody>
+        {% for pledge in pledges %}
+        <tr>
+          <td class="cell-primary">{{ pledge.donor.name }}</td>
+          <td data-label="Blood group">{{ ui.blood_badge(pledge.donor.blood_group) }}</td>
+          <td data-label="Contact">
+            <div class="contact-cell">
+              {% if pledge.donor.phone %}<a href="tel:{{ pledge.donor.phone }}">{{ pledge.donor.phone }}</a>{% endif %}
+              <a class="cell-sub" href="mailto:{{ pledge.donor.email }}">{{ pledge.donor.email }}</a>
+            </div>
+          </td>
+          <td data-label="Pledged" class="muted cell-nowrap">{{ pledge.created_at|timeago }}</td>
+          <td data-label="Arriving in" class="mono cell-nowrap">{% if pledge.is_active and pledge.eta_minutes is not none %}{{ pledge.eta_minutes }} min{% else %}—{% endif %}</td>
+          <td data-label="Status">{{ ui.status_badge(pledge.status) }}</td>
+          <td class="cell-action">
+            {% if pledge.is_active %}
+            <div class="button-row button-row-tight">
+              <form method="post" action="{{ url_for('hospital.pledge_outcome', pledge_id=pledge.id) }}">
+                {{ ui.csrf() }}<input type="hidden" name="outcome" value="donated">
+                <button type="submit" class="btn btn-primary btn-small">Donated</button>
+              </form>
+              <form method="post" action="{{ url_for('hospital.pledge_outcome', pledge_id=pledge.id) }}" data-confirm="Mark this donor as not arrived? Their unit will open up for other donors.">
+                {{ ui.csrf() }}<input type="hidden" name="outcome" value="no_show">
+                <button type="submit" class="btn btn-ghost btn-small">Didn't arrive</button>
+              </form>
+            </div>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">{{ ui.icon('users', 'empty-icon') }}<p>No donors have pledged yet. Alert nearby donors to get started.</p></div>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}
+{{ ui.leaflet_js() }}
+<script src="{{ url_for('static', filename='js/request-map.js') }}" defer></script>
+{% endblock %}

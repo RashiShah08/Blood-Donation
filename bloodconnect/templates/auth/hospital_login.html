@@ -1,0 +1,23 @@
+{% extends "auth/_login.html" %}
+{% set kind = "hospital" %}
+{% block surface %}product{% endblock %}
+{% block theme_color %}#f6f6f8{% endblock %}
+{% block title %}Hospital login{% endblock %}
+{% block heading %}Hospital login{% endblock %}
+{% block intro %}Manage blood requests, alert nearby donors and follow arrivals live.{% endblock %}
+{% block switch %}Hospital not registered yet? <a href="{{ url_for('auth.hospital_register') }}">Register your hospital</a><br>Want to donate? <a href="{{ url_for('auth.donor_login') }}">Donor login</a>{% endblock %}
+{% block aside %}
+<p class="eyebrow">For blood banks</p>
+<h2>Your requests, donors and arrivals in one place</h2>
+<ul>
+  <li>{{ ui.icon('users') }} Compatible donors within 2 to 25 km, shown privately</li>
+  <li>{{ ui.icon('mail') }} One-click alerts, never sent twice to the same donor</li>
+  <li>{{ ui.icon('activity') }} A live operations console with donor ETAs</li>
+</ul>
+<div class="mini-ops" aria-hidden="true">
+  <div class="mini-ops-head"><span class="live-pill">Live</span><span>Example · arrivals</span></div>
+  <div class="mini-ops-row"><span class="blood-badge blood-badge-sm">O-</span><span>Donor on the way</span><b>6 min</b></div>
+  <div class="mini-ops-row"><span class="blood-badge blood-badge-sm">A+</span><span>Donor on the way</span><b>14 min</b></div>
+  <div class="mini-ops-row is-arrived"><span class="blood-badge blood-badge-sm">B+</span><span>Arrived at blood bank</span><b>Now</b></div>
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Directions to {{ hospital.name }}{% endblock %}
+{% block head %}{{ ui.leaflet_css() }}{% endblock %}
+{% block content %}
+<section class="section section-tight">
+  <div class="container">
+    <p><a class="link-back" href="{{ url_for('donor.dashboard') }}">{{ ui.icon('arrow-left') }} Back to dashboard</a></p>
+    <div class="page-heading">
+      <div>
+        <h1>Directions to {{ hospital.name }}</h1>
+        <p class="muted">{{ hospital.address }}, {{ hospital.city }} · {{ pledge.request.blood_group }} blood · {{ ui.status_badge(pledge.status) }}</p>
+      </div>
+      <a class="btn btn-secondary" href="tel:{{ hospital.phone }}">{{ ui.icon('phone') }} Call hospital</a>
+    </div>
+
+    {% if not pledge.is_active %}
+      <div class="alert alert-info" role="status">{{ ui.icon('info') }}<p>This pledge is {{ 'complete' if pledge.status == 'donated' else 'no longer active' }}, so live directions are turned off.</p></div>
+    {% endif %}
+
+    <div class="directions-layout"
+         id="directions"
+         data-route-url="{{ url_for('donor.route', pledge_id=pledge.id) }}"
+         data-arrived-url="{{ url_for('donor.arrived', pledge_id=pledge.id) }}"
+         data-progress-url="{{ url_for('donor.progress', pledge_id=pledge.id) }}"
+         data-hospital-lat="{{ hospital.latitude }}"
+         data-hospital-lng="{{ hospital.longitude }}"
+         data-hospital-name="{{ hospital.name }}"
+         data-active="{{ 'true' if pledge.is_active else 'false' }}"
+         data-already-arrived="{{ 'true' if pledge.status == 'arrived' else 'false' }}">
+      <aside class="card directions-panel" aria-label="Trip details">
+        <p class="trip-status" data-trip-status aria-live="polite">Press "Start" to share your location with this page and see the route.</p>
+        <dl class="trip-stats">
+          <div><dt>Distance left</dt><dd data-stat="distance">—</dd></div>
+          <div><dt>Arriving in</dt><dd data-stat="eta">—</dd></div>
+          <div><dt>Speed</dt><dd data-stat="speed">—</dd></div>
+        </dl>
+        <div class="progress-row">
+          <label for="trip-progress">Trip progress</label>
+          <progress id="trip-progress" max="100" value="0" data-stat="progress"></progress>
+        </div>
+        <p class="muted small" data-route-source></p>
+        {% if pledge.is_active %}
+        <div class="button-stack">
+          <button type="button" class="btn btn-primary btn-block" data-action="start">{{ ui.icon('route') }} Start</button>
+          <button type="button" class="btn btn-secondary btn-block" data-action="stop" hidden>Pause tracking</button>
+          <div class="button-grid">
+            <button type="button" class="btn btn-secondary btn-small" data-action="recenter">{{ ui.icon('crosshair') }} Recenter</button>
+            <button type="button" class="btn btn-secondary btn-small" data-action="share">{{ ui.icon('share') }} Share</button>
+          </div>
+        </div>
+        {% endif %}
+        <div class="alert alert-success arrival" data-arrival {% if pledge.status != 'arrived' %}hidden{% endif %} role="status">
+          {{ ui.icon('heart') }}
+          <div>
+            <p><strong>You've arrived.</strong> Please go to the blood bank reception and mention BloodConnect. Thank you for helping!</p>
+          </div>
+        </div>
+        <p class="muted small">The hospital sees only your estimated arrival time and distance left, never your position.</p>
+      </aside>
+      <div class="map directions-map" data-map role="group" aria-label="Map showing the route to the hospital"></div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+{{ ui.leaflet_js() }}
+<script src="{{ url_for('static', filename='js/directions.js') }}" defer></script>
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends "hospital/_shell.html" %}
+{% block title %}{{ hospital.name }} dashboard{% endblock %}
+{% block breadcrumbs %}<span aria-current="page">Overview</span>{% endblock %}
+{% block topbar_actions %}<a class="btn btn-secondary" href="{{ url_for('hospital.ops') }}">{{ ui.icon('activity') }} Live ops</a>{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ hospital.name }}</h1>
+    <p class="muted">{{ hospital.city }}, {{ hospital.state }}{% if hospital.is_verified %} · <span class="badge badge-status-fulfilled">Verified</span>{% endif %}</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('hospital.new_request') }}">{{ ui.icon('plus') }} New blood request</a>
+</div>
+
+{% if config.REQUIRE_HOSPITAL_VERIFICATION and not hospital.is_verified %}
+<div class="alert alert-warning" role="status">{{ ui.icon('shield') }}<p>Your account is waiting for verification. You can create requests now, but you can't alert donors until it's verified.</p></div>
+{% endif %}
+
+<div class="kpi-grid">
+  {{ ui.kpi('open_requests', 'Open requests', stats.open_requests, icon_name='activity') }}
+  {{ ui.kpi('units_needed', 'Units still needed', stats.units_needed, icon_name='drop') }}
+  {{ ui.kpi('active_pledges', 'Active pledges', stats.active_pledges, note='Donors on the way or arrived', icon_name='users') }}
+  {{ ui.kpi('median_response', 'Median time to pledge', (stats.median_response_minutes ~ ' min') if stats.median_response_minutes is not none else '—', note='From alert email to pledge', icon_name='clock') }}
+</div>
+{% set units_required = open_requests|sum(attribute='units_required') %}
+{% set units_pledged = open_requests|sum(attribute='units_pledged') %}
+{% set trend_total = stats.pledge_trend|sum(attribute='count') %}
+<div class="insights">
+  <section class="panel insight" aria-labelledby="coverage-heading">
+    <div class="panel-head">
+      <h2 id="coverage-heading">Blood still needed</h2>
+      {% if stats.fulfilment_rate is not none %}<span class="muted small">{{ stats.fulfilment_rate }}% of closed requests fulfilled</span>{% endif %}
+    </div>
+    <div class="panel-body">
+      {% if open_requests %}
+      <p class="insight-figure"><b>{{ (units_pledged / units_required * 100)|round|int if units_required else 0 }}%</b> <span>covered · {{ units_pledged }} of {{ units_required }} units pledged</span></p>
+      <ul class="unit-rows">
+        {% for req in open_requests[:5] %}
+        <li>
+          <a class="unit-row-label" href="{{ url_for('hospital.request_detail', request_id=req.id) }}">{{ ui.blood_badge(req.blood_group, 'blood-badge-sm') }}<span class="mono">#{{ req.id }}</span></a>
+          <span class="unit-blocks" role="img" aria-label="{{ req.units_pledged }} of {{ req.units_required }} units pledged">
+            {% for n in range(req.units_required if req.units_required <= 12 else 12) %}<i class="{{ 'is-filled' if n < req.units_pledged else '' }}{{ ' is-critical' if req.urgency == 'critical' and n >= req.units_pledged else '' }}" style="--i: {{ n }}"></i>{% endfor %}
+          </span>
+          <span class="unit-row-count">{{ req.units_pledged }}/{{ req.units_required }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="insight-figure"><b>All clear</b> <span>No open requests right now</span></p>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="panel insight" aria-labelledby="trend-heading">
+    <div class="panel-head">
+      <h2 id="trend-heading">Pledges, last 14 days</h2>
+      <span class="muted small">{{ trend_total }} total</span>
+    </div>
+    <div class="panel-body">
+      <ol class="trend" aria-label="Pledges per day">
+        {% for point in stats.pledge_trend %}
+        <li style="--h: {{ point.height }}; --i: {{ loop.index0 }}" class="{{ 'is-today' if loop.last else '' }}{{ ' is-empty' if point.count == 0 else '' }}">
+          <span class="trend-bar" aria-hidden="true"></span>
+          <span class="trend-tip">{{ point.count }} on {{ point.day.strftime('%d %b') }}</span>
+        </li>
+        {% endfor %}
+      </ol>
+      <div class="trend-axis" aria-hidden="true"><span>{{ stats.pledge_trend[0].day.strftime('%d %b') }}</span><span>Today</span></div>
+    </div>
+  </section>
+</div>
+
+<div class="dashboard-grid">
+  <div>
+    <section class="panel" aria-labelledby="open-heading">
+      <div class="panel-head">
+        <h2 id="open-heading">Open requests</h2>
+        <span class="muted small">{{ open_requests|length }} open</span>
+      </div>
+      {% if open_requests %}
+      <div class="table-wrap">
+        <table class="table-cards">
+          <thead>
+            <tr><th scope="col">Request</th><th scope="col">Group</th><th scope="col">Urgency</th><th scope="col">Pledged</th><th scope="col">Alerted</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr>
+          </thead>
+          <tbody>
+            {% for req in open_requests %}
+            <tr>
+              <td class="cell-primary">
+                <a class="row-link" href="{{ url_for('hospital.request_detail', request_id=req.id) }}"><span class="mono">#{{ req.id }}</span> {{ req.patient_name }}</a>
+                <div class="cell-sub">Posted {{ req.created_at|timeago }}</div>
+              </td>
+              <td data-label="Blood group">{{ ui.blood_badge(req.blood_group) }}</td>
+              <td data-label="Urgency">{{ ui.urgency_badge(req.urgency) }}</td>
+              <td data-label="Units pledged">
+                <div class="units">
+                  <span class="mono">{{ req.units_pledged }} / {{ req.units_required }}</span>
+                  <progress max="{{ req.units_required }}" value="{{ req.units_pledged }}" aria-label="Units pledged for request {{ req.id }}"></progress>
+                </div>
+              </td>
+              <td data-label="Alerted" class="mono">{{ req.notifications|length }}</td>
+              <td class="cell-action"><a class="btn btn-secondary btn-small" href="{{ url_for('hospital.request_detail', request_id=req.id) }}" aria-label="Manage request {{ req.id }}">Manage {{ ui.icon('arrow-right') }}</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        {{ ui.icon('hospital', 'empty-icon') }}
+        <p>You have no open requests.</p>
+        <a class="btn btn-primary" href="{{ url_for('hospital.new_request') }}">Create a request</a>
+      </div>
+      {% endif %}
+    </section>
+
+    {% if closed_requests %}
+    <section class="panel" aria-labelledby="closed-heading">
+      <div class="panel-head"><h2 id="closed-heading">Recently closed</h2></div>
+      <div class="table-wrap">
+        <table class="table-cards">
+          <thead><tr><th scope="col">Request</th><th scope="col">Patient</th><th scope="col">Blood group</th><th scope="col">Units</th><th scope="col">Status</th><th scope="col">Closed</th></tr></thead>
+          <tbody>
+            {% for req in closed_requests %}
+            <tr>
+              <td class="cell-primary"><a class="mono row-link" href="{{ url_for('hospital.request_detail', request_id=req.id) }}">#{{ req.id }}</a></td>
+              <td data-label="Patient">{{ req.patient_name }}</td>
+              <td data-label="Blood group">{{ ui.blood_badge(req.blood_group) }}</td>
+              <td data-label="Units" class="mono">{{ req.units_pledged }} / {{ req.units_required }}</td>
+              <td data-label="Status">{{ ui.status_badge(req.status) }}</td>
+              <td data-label="Closed" class="muted">{{ req.closed_at|datefmt }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    {% endif %}
+  </div>
+
+  <aside class="sticky-aside">
+    <section class="panel" aria-labelledby="activity-heading">
+      <div class="panel-head">
+        <h2 id="activity-heading">Live activity</h2>
+        <span class="live-pill" data-live-state>Live</span>
+      </div>
+      <ol class="activity-list" data-activity-list aria-live="polite">
+        {% for event in activity %}
+        <li><span class="activity-dot" data-kind="{{ event.kind }}" aria-hidden="true"></span><span>{{ event.text }}<span class="activity-time">{{ event.at|timeago }}</span></span></li>
+        {% endfor %}
+      </ol>
+      <p class="activity-empty" data-activity-empty{% if activity %} hidden{% endif %}>No activity yet. Pledges, arrivals and alerts will appear here as they happen.</p>
+    </section>
+    <a class="btn btn-secondary btn-block" href="{{ url_for('hospital.ops') }}">{{ ui.icon('activity') }} Open the live ops console</a>
+  </aside>
+</div>
+{% endblock %}

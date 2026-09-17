@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+{% from "partials/interactive.html" import compat_explorer, quick_check with context %}
+{% block content %}
+<section class="h-hero">
+  <div class="container h-hero-grid">
+    <div class="h-hero-copy">
+      <p class="h-pill"><span class="h-pill-dot" aria-hidden="true"></span> Voluntary blood donation, coordinated</p>
+      <h1 class="h-title">Someone near you needs <span class="accent-serif">your blood group</span> today.</h1>
+      <p class="h-lead">BloodConnect alerts you only when a hospital nearby needs a blood group you can give, checks you're able to donate, and guides you to the door.</p>
+      <div class="h-actions">
+        <a class="btn btn-primary btn-large" href="{{ url_for('auth.donor_register') }}">Become a donor {{ ui.icon('arrow-right') }}</a>
+        <a class="h-link" href="{{ url_for('auth.hospital_register') }}">Register a hospital {{ ui.icon('arrow-right') }}</a>
+      </div>
+      <p class="hero-login">Already registered? <a href="{{ url_for('auth.donor_login') }}">Donor login</a> · <a href="{{ url_for('auth.hospital_login') }}">Hospital login</a></p>
+    </div>
+    <figure class="hero-stage" data-hero-stage data-phase="0" aria-label="How a request reaches a donor, shown as an animation">
+      <svg class="stage-map" viewBox="0 0 480 480" role="presentation" focusable="false">
+        <defs>
+          <radialGradient id="stage-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ff8b7b" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#ff8b7b" stop-opacity="0"/>
+          </radialGradient>
+          <clipPath id="stage-clip"><rect width="480" height="480" rx="36"/></clipPath>
+        </defs>
+        <g clip-path="url(#stage-clip)">
+        <rect class="stage-ground" width="480" height="480" rx="36"/>
+        <path class="stage-river" d="M-10 318 C 90 286, 170 350, 270 322 S 420 280, 490 300"/>
+        <rect class="stage-park" x="286" y="36" width="92" height="58" rx="16"/>
+        <rect class="stage-park" x="36" y="400" width="54" height="46" rx="14"/>
+        <g class="stage-streets">
+          <path d="M0 90 H480 M0 230 H480 M0 380 H480 M110 0 V480 M250 0 V480 M400 0 V480"/>
+          <path class="stage-street-minor" d="M0 160 H250 M250 300 H480 M180 230 V480 M330 0 V230"/>
+        </g>
+        <circle class="stage-glow" cx="250" cy="230" r="150" fill="url(#stage-glow)"/>
+        <g class="stage-rings">
+          <circle cx="250" cy="230" r="40"/>
+          <circle cx="250" cy="230" r="40"/>
+          <circle cx="250" cy="230" r="40"/>
+        </g>
+        <path class="stage-route" d="M110 90 V230 H250" pathLength="100"/>
+        <g class="stage-donor is-match" data-donor="1"><circle class="halo" cx="110" cy="90" r="16"/><circle class="dot" cx="110" cy="90" r="8"/></g>
+        <g class="stage-donor is-match" data-donor="2"><circle class="halo" cx="400" cy="130" r="16"/><circle class="dot" cx="400" cy="130" r="8"/></g>
+        <g class="stage-donor is-match" data-donor="3"><circle class="halo" cx="330" cy="380" r="16"/><circle class="dot" cx="330" cy="380" r="8"/></g>
+        <g class="stage-donor" data-donor="4"><circle class="dot" cx="110" cy="330" r="7"/></g>
+        <g class="stage-donor" data-donor="5"><circle class="dot" cx="40" cy="230" r="7"/></g>
+        <g class="stage-donor" data-donor="6"><circle class="dot" cx="420" cy="440" r="7"/></g>
+        <circle class="stage-traveller" r="9" cx="0" cy="0">
+          <animateMotion dur="2.4s" fill="freeze" begin="indefinite" path="M110 90 V230 H250" calcMode="spline" keyTimes="0;1" keySplines="0.45 0 0.35 1"/>
+        </circle>
+        <g class="stage-hospital">
+          <rect x="226" y="206" width="48" height="48" rx="14"/>
+          <path d="M250 218 V242 M238 230 H262"/>
+        </g>
+        </g>
+      </svg>
+
+      <div class="stage-chip stage-chip-eta"><span class="stage-chip-dot"></span><span class="eta-live">Arriving in <b data-stage-eta>6</b> min</span><span class="eta-done">Arrived</span></div>
+      <div class="stage-chip stage-chip-group"><span class="blood-badge">A+</span> 2 units needed</div>
+
+      <figcaption class="stage-card">
+        <ol class="stage-steps" aria-hidden="true"><li></li><li></li><li></li><li></li></ol>
+        <div class="stage-lines">
+          <p class="stage-line" data-line="0"><span class="stage-kicker">Critical request</span><b>City hospital needs A+ blood</b><span>Posted just now, 700 m from you</span></p>
+          <p class="stage-line" data-line="1"><span class="stage-kicker">Matched in seconds</span><b>3 compatible donors alerted</b><span>Only people who can give A+, nearby and eligible</span></p>
+          <p class="stage-line" data-line="2"><span class="stage-kicker">Pledged</span><b>A donor is on the way</b><span>The hospital sees the arrival time, never the location</span></p>
+          <p class="stage-line" data-line="3"><span class="stage-kicker">Arrived</span><b>1 of 2 units covered</b><span>The blood bank marks the donation complete</span></p>
+        </div>
+      </figcaption>
+    </figure>
+  </div>
+
+  <div class="container">
+    <dl class="h-figures">
+      <div><dt>Blood groups matched</dt><dd>8</dd></div>
+      <div><dt>Questions in the health check</dt><dd>11</dd></div>
+      <div><dt>Most precise location a hospital sees</dt><dd>~1&nbsp;km</dd></div>
+      <div><dt>Cost to donate, always</dt><dd>Free</dd></div>
+    </dl>
+  </div>
+</section>
+
+<section class="h-lifeline" aria-labelledby="lifeline-title">
+  <div class="container">
+    <div class="h-head">
+      <div>
+        <p class="h-kicker">How it works</p>
+        <h2 id="lifeline-title">From an urgent request to a donor <span class="accent-serif">at the door</span></h2>
+      </div>
+      <a class="h-link" href="{{ url_for('main.how_it_works') }}">See the full process {{ ui.icon('arrow-right') }}</a>
+    </div>
+    <ol class="h-timeline" data-reveal>
+      <li>
+        <span class="h-step">Request</span>
+        <h3>A hospital posts a request</h3>
+        <p>The blood bank enters the blood group, the units needed and how urgent it is.</p>
+      </li>
+      <li>
+        <span class="h-step">Match</span>
+        <h3>Compatible donors nearby are alerted</h3>
+        <p>We match by blood group, distance, availability and the time since each donor last gave blood.</p>
+      </li>
+      <li>
+        <span class="h-step">Pledge</span>
+        <h3>You pledge and get directions</h3>
+        <p>A short eligibility check, one tap to pledge, then live directions. The hospital sees your ETA, never your location.</p>
+      </li>
+      <li>
+        <span class="h-step">Donate</span>
+        <h3>The blood bank confirms</h3>
+        <p>Your donation is recorded, the request updates for the hospital, and you earn your next badge.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<section class="section h-section" id="compatibility">
+  <div class="container">
+    {{ compat_explorer(compat) }}
+  </div>
+</section>
+
+<section class="h-audiences">
+  <div class="container h-audience-grid">
+    <article class="h-audience h-audience-donor">
+      <div class="h-audience-copy">
+        <p class="h-kicker">For donors</p>
+        <h2>Help, only when <span class="accent-serif">you can</span>.</h2>
+        <ul class="h-checks">
+          <li>{{ ui.icon('check') }} Alerts only for your blood group, nearby</li>
+          <li>{{ ui.icon('check') }} A quick health check before you travel</li>
+          <li>{{ ui.icon('check') }} Badges and a certificate, never payment</li>
+        </ul>
+        <a class="btn btn-primary" href="{{ url_for('auth.donor_register') }}">Become a donor {{ ui.icon('arrow-right') }}</a>
+      </div>
+      <div class="h-alert" aria-hidden="true">
+        <div class="h-alert-top"><span class="h-alert-app"><span class="brand-mark">{{ ui.icon('drop') }}</span> BloodConnect</span><span>now</span></div>
+        <p class="h-alert-title">A hospital 700 m away needs A+</p>
+        <p class="h-alert-body">2 units · High urgency · You're eligible to donate</p>
+        <div class="h-alert-actions"><span>Not now</span><span class="is-primary">I can help</span></div>
+      </div>
+    </article>
+
+    <article class="h-audience h-audience-hospital">
+      <div class="h-audience-copy">
+        <p class="h-kicker">For blood banks and hospitals</p>
+        <h2>See who's coming, <span class="accent-serif">and when</span>.</h2>
+        <ul class="h-checks">
+          <li>{{ ui.icon('check') }} Find available, compatible donors within 2 to 25 km</li>
+          <li>{{ ui.icon('check') }} Alert them in one click, never twice</li>
+          <li>{{ ui.icon('check') }} Follow pledges and arrival times live</li>
+        </ul>
+        <div class="button-row">
+          <a class="btn btn-light" href="{{ url_for('auth.hospital_register') }}">Register a hospital</a>
+          <a class="h-link h-link-light" href="{{ url_for('auth.hospital_login') }}">Hospital login {{ ui.icon('arrow-right') }}</a>
+        </div>
+      </div>
+      <div class="h-console" aria-hidden="true">
+        <div class="h-console-head"><span><i></i> Live</span><span>Example data</span></div>
+        <div class="h-console-kpis">
+          <div><span>Units needed</span><b>4</b></div>
+          <div><span>On the way</span><b>3</b></div>
+          <div><span>Arrived</span><b>1</b></div>
+        </div>
+        <div class="h-console-row"><span class="tag">A+</span><span>Request #1042</span><b>6 min</b></div>
+        <div class="h-console-row"><span class="tag">O-</span><span>Request #1041</span><b>14 min</b></div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="section h-section" id="quick-check">
+  <div class="container">
+    {{ quick_check(rules) }}
+  </div>
+</section>
+
+<section class="h-promises">
+  <div class="container">
+    <ul class="h-promise-list">
+      <li>
+        {{ ui.icon('heart') }}
+        <h3>One donation, several patients</h3>
+        <p>Donated blood is often separated into red cells, plasma and platelets, so a single donation can help more than one patient.</p>
+      </li>
+      <li>
+        {{ ui.icon('shield') }}
+        <h3>Your location stays private</h3>
+        <p>Hospitals see only roughly how far away a matching donor is. Your name and phone number are shared only after you pledge.</p>
+      </li>
+      <li>
+        {{ ui.icon('award') }}
+        <h3>Voluntary and unpaid, always</h3>
+        <p>Blood donation in India must be voluntary. We thank donors with badges and a certificate, never with money or coupons.</p>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="h-closing">
+  <div class="container h-closing-inner">
+    <h2>Be the reason someone <span class="accent-serif">goes home</span>.</h2>
+    <p>Registering takes two minutes. You'll only hear from us about requests you can actually help with.</p>
+    <div class="h-actions">
+      <a class="btn btn-primary btn-large" href="{{ url_for('auth.donor_register') }}">Become a donor {{ ui.icon('arrow-right') }}</a>
+      <a class="h-link" href="{{ url_for('main.for_donors') }}">Donor guidelines {{ ui.icon('arrow-right') }}</a>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/interactive.js') }}" defer></script>
+{% endblock %}

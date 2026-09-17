@@ -8,11 +8,21 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
+.ruff_cache/
 
 # Virtual environments
 venv/
 .venv/
 env/
+
+# Local data
+instance/
+*.db
+*.sqlite3
+
+# Test artifacts
+test-results/
+playwright-report/
 
 # Editors / OS
 .vscode/

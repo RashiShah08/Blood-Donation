@@ -1,0 +1,18 @@
+{% extends "auth/_login.html" %}
+{% set kind = "donor" %}
+{% block title %}Donor login{% endblock %}
+{% block heading %}Welcome back{% endblock %}
+{% block intro %}Log in to see requests near you that your blood group can help with.{% endblock %}
+{% block switch %}New donor? <a href="{{ url_for('auth.donor_register') }}">Create an account</a><br>Representing a hospital? <a href="{{ url_for('auth.hospital_login') }}">Hospital login</a>{% endblock %}
+{% block aside %}
+<div class="drop" aria-hidden="true"></div>
+<svg class="pulse-line" viewBox="0 0 600 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+  <path pathLength="100" d="M0 70 H170 L190 70 L205 40 L222 100 L240 18 L258 88 L272 70 H600"/>
+</svg>
+<h2>Every alert is a real, nearby need</h2>
+<ul>
+  <li>{{ ui.icon('check') }} Only requests your blood group can help</li>
+  <li>{{ ui.icon('check') }} A quick eligibility check before you travel</li>
+  <li>{{ ui.icon('check') }} Directions to the blood bank door</li>
+</ul>
+{% endblock %}

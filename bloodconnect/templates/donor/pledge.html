@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Eligibility check{% endblock %}
+{% block content %}
+<section class="section section-tight">
+  <div class="container">
+    <p><a class="link-back" href="{{ url_for('donor.request_detail', request_id=blood_request.id) }}">{{ ui.icon('arrow-left') }} Back to request</a></p>
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">Step 2 of 2 · Eligibility check</p>
+        <h1>Can you donate today?</h1>
+        <p class="lead">Please answer honestly. Your answers aren't stored.</p>
+      </div>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-error" role="alert" tabindex="-1" data-autofocus>
+      {{ ui.icon('alert') }}
+      <div>
+        <p><strong>{{ error }}</strong></p>
+        {% if reasons %}<ul>{% for reason in reasons %}<li>{{ reason }}</li>{% endfor %}</ul>{% endif %}
+        {% if reasons %}<p>This is for your safety and the patient's. Thank you for wanting to help, and please check back when you're able to donate.</p>{% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="split">
+      <form method="post" class="card form-card" data-questionnaire novalidate>
+        {{ ui.csrf() }}
+        <div class="progress-row">
+          <label for="questionnaire-progress"><span data-progress-count>0</span> of {{ questions|length }} answered</label>
+          <progress id="questionnaire-progress" max="{{ questions|length }}" value="0"></progress>
+        </div>
+        <ol class="questions">
+          {% for question in questions %}
+          <li>
+            <fieldset class="question">
+              <legend>{{ question.text }}</legend>
+              <div class="yes-no">
+                {% for value, label in [('yes', 'Yes'), ('no', 'No')] %}
+                <label class="choice">
+                  <input type="radio" name="{{ question.key }}" value="{{ value }}" required{% if answers.get(question.key) == value %} checked{% endif %}>
+                  <span>{{ label }}</span>
+                </label>
+                {% endfor %}
+              </div>
+            </fieldset>
+          </li>
+          {% endfor %}
+        </ol>
+        <p class="muted small">The blood bank's medical officer will do a final health check before you donate.</p>
+        <div class="button-row">
+          <button type="submit" class="btn btn-primary btn-large">Confirm my pledge</button>
+          <a class="btn btn-ghost" href="{{ url_for('donor.dashboard') }}">Not today</a>
+        </div>
+      </form>
+
+      <aside class="sticky-aside aside-first" aria-label="Pledge summary">
+        <div class="card">
+          <div class="request-title">
+            {{ ui.blood_badge(blood_request.blood_group) }}
+            <div>
+              <h2 class="h2" style="font-size:1.15rem;margin:0">{{ blood_request.hospital.name }}</h2>
+              <p class="muted small" style="margin:0">{{ blood_request.hospital.city }} · {{ distance_km|km }} away</p>
+            </div>
+          </div>
+        </div>
+        <div class="card desktop-only" aria-hidden="true">
+          <div class="ring" data-ring>
+            <div class="ring-inner"><span class="ring-value" data-ring-value>0/{{ questions|length }}</span><span class="ring-label">answered</span></div>
+          </div>
+        </div>
+        <div class="card desktop-only">
+          <h2 class="card-title">{{ ui.icon('keyboard') }} Answer faster</h2>
+          <p class="hint-keys"><span><kbd>Y</kbd> Yes</span><span><kbd>N</kbd> No</span><span><kbd>↑</kbd><kbd>↓</kbd> Move between questions</span></p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/pledge.js') }}" defer></script>
+{% endblock %}

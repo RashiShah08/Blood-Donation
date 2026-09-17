@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% from "partials/interactive.html" import compat_explorer with context %}
+{% block title %}How it works{% endblock %}
+{% block description %}How hospitals raise blood requests and how BloodConnect matches, alerts and guides compatible donors.{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div class="container">
+    <div class="page-header-inner">
+      <p class="eyebrow">How it works</p>
+      <h1>From an urgent request to a donor at the door</h1>
+      <p class="lead">A request goes from the hospital to compatible donors nearby, and the donor goes from pledging to the blood bank.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section section-tight">
+  <div class="container doc">
+    <article class="prose">
+      <h2 id="for-hospitals">For hospitals</h2>
+      <ol class="numbered">
+        <li><strong>Register your hospital</strong> with its address and location on the map.</li>
+        <li><strong>Create a request</strong> with the patient's blood group, units needed and urgency. Patient details are only visible to your hospital.</li>
+        <li><strong>Search nearby donors.</strong> You'll see how many available, compatible donors are within 2, 5, 10 or 25 km, shown at approximate positions.</li>
+        <li><strong>Alert donors.</strong> Each donor is emailed at most once per request.</li>
+        <li><strong>Follow arrivals live.</strong> The operations console shows who pledged and each donor's live arrival time. Record who donated, and close the request when it's fulfilled.</li>
+      </ol>
+
+      <h2 id="for-donors">For donors</h2>
+      <ol class="numbered">
+        <li><strong>Register</strong> with your blood group, weight, date of birth and home area.</li>
+        <li><strong>See requests you can help with</strong> on your dashboard. New ones appear live, or you'll get an email.</li>
+        <li><strong>Answer a short eligibility check</strong> based on India's national guidelines. Your answers aren't stored.</li>
+        <li><strong>Pledge</strong> one unit and follow live directions. The hospital sees your ETA, not your location.</li>
+        <li><strong>Donate.</strong> The blood bank's medical officer does the final screening. Once the hospital records your donation, it appears on your impact page.</li>
+      </ol>
+
+      <h2 id="privacy">What each side can see</h2>
+      <ul>
+        <li>Before a donor pledges, hospitals see only blood group, approximate position and distance.</li>
+        <li>After pledging, the hospital sees the donor's name, contact details and live ETA.</li>
+        <li>Donors never see patient names or clinical notes.</li>
+      </ul>
+    </article>
+    <nav class="toc" aria-label="On this page" data-toc>
+      <p class="toc-title">On this page</p>
+      <a href="#for-hospitals">For hospitals</a>
+      <a href="#for-donors">For donors</a>
+      <a href="#privacy">What each side can see</a>
+      <a href="#compatibility">Blood compatibility</a>
+    </nav>
+  </div>
+</section>
+
+<section class="section section-muted" id="compatibility">
+  <div class="container">
+    {{ compat_explorer(compat, heading="Red cell compatibility", eyebrow="Interactive") }}
+    <details class="table-details">
+      <summary>Show the full compatibility table</summary>
+      <div class="table-wrap">
+        <table>
+          <caption class="visually-hidden">Which donor blood groups each patient blood group can receive</caption>
+          <thead><tr><th scope="col">Patient's blood group</th><th scope="col">Can receive from</th></tr></thead>
+          <tbody>
+            {% for group, donors in compatibility.items() %}
+            <tr><th scope="row">{{ ui.blood_badge(group) }}</th><td>{{ donors|join(', ') }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/interactive.js') }}" defer></script>
+{% endblock %}

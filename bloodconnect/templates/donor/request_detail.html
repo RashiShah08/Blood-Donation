@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Request at {{ blood_request.hospital.name }}{% endblock %}
+{% block head %}{{ ui.leaflet_css() }}{% endblock %}
+{% block content %}
+{% set hospital = blood_request.hospital %}
+<section class="section section-tight">
+  <div class="container">
+    <p><a class="link-back" href="{{ url_for('donor.dashboard') }}">{{ ui.icon('arrow-left') }} Back to dashboard</a></p>
+    <div class="split split-wide-aside">
+      <div class="card form-card">
+        <div class="request-hero">
+          <div class="request-title">
+            {{ ui.blood_badge(blood_request.blood_group, 'blood-badge-large') }}
+            <div>
+              <h1 class="h2">{{ hospital.name }}</h1>
+              <p class="muted">{{ hospital.address }}, {{ hospital.city }}, {{ hospital.state }} {{ hospital.pincode }}</p>
+            </div>
+          </div>
+          <div class="badge-row">{{ ui.urgency_badge(blood_request.urgency) }} {{ ui.status_badge(blood_request.status) }}</div>
+        </div>
+
+        <dl class="details details-row">
+          <div><dt>Blood group needed</dt><dd>{{ blood_request.blood_group }}</dd></div>
+          <div><dt>Units still needed</dt><dd>{{ blood_request.units_remaining }} of {{ blood_request.units_required }}</dd></div>
+          <div><dt>Distance</dt><dd>{{ distance_km|km }}</dd></div>
+          <div><dt>Posted</dt><dd>{{ blood_request.created_at|timeago }}</dd></div>
+        </dl>
+
+        {% if pledge and pledge.is_active %}
+          <div class="alert alert-success" role="status">{{ ui.icon('check') }}<p>You've pledged for this request. Thank you!</p></div>
+          <div class="button-row">
+            <a class="btn btn-primary" href="{{ url_for('donor.directions', pledge_id=pledge.id) }}">{{ ui.icon('route') }} Get directions</a>
+            <a class="btn btn-secondary" href="tel:{{ hospital.phone }}">{{ ui.icon('phone') }} Call {{ hospital.phone }}</a>
+          </div>
+        {% elif pledge and pledge.status == 'donated' %}
+          <div class="alert alert-success" role="status">{{ ui.icon('heart') }}<p>You donated for this request. Thank you for saving lives!</p></div>
+        {% elif not blood_request.is_open %}
+          <div class="alert alert-info" role="status">{{ ui.icon('info') }}<p>This request is closed and no longer needs donors.</p></div>
+        {% elif blood_request.units_remaining == 0 %}
+          <div class="alert alert-info" role="status">{{ ui.icon('info') }}<p>Enough donors have already pledged for this request. Thank you for offering!</p></div>
+        {% elif not current_donor.is_available %}
+          <div class="alert alert-warning" role="status">{{ ui.icon('clock') }}<p>You're marked as not available. Switch availability on from your dashboard to pledge.</p></div>
+        {% elif not eligibility.eligible %}
+          <div class="alert alert-warning" role="status">
+            {{ ui.icon('clock') }}
+            <div>
+              <p>You can't donate right now:</p>
+              <ul>{% for reason in eligibility.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+              <p>If your details have changed, <a href="{{ url_for('donor.profile') }}">update your profile</a>.</p>
+            </div>
+          </div>
+        {% else %}
+          <p>Before pledging, answer 11 quick questions to check you're able to donate today.</p>
+          <a class="btn btn-primary btn-large" href="{{ url_for('donor.pledge', request_id=blood_request.id) }}">Check eligibility and pledge</a>
+        {% endif %}
+      </div>
+
+      <aside class="sticky-aside" aria-label="Where the hospital is">
+        <div class="card">
+          <h2 class="card-title">{{ ui.icon('route') }} {{ distance_km|km }} from your home area</h2>
+          <div class="map mini-map" data-mini-map
+               data-hospital-lat="{{ hospital.latitude }}" data-hospital-lng="{{ hospital.longitude }}" data-hospital-name="{{ hospital.name }}"
+               data-home-lat="{{ current_donor.latitude }}" data-home-lng="{{ current_donor.longitude }}"
+               role="group" aria-label="Map showing {{ hospital.name }} and your home area"></div>
+        </div>
+        <div class="card request-aside-actions">
+          <a class="btn btn-secondary btn-block" href="tel:{{ hospital.phone }}">{{ ui.icon('phone') }} Call the blood bank</a>
+          <a class="btn btn-ghost btn-block" href="https://www.openstreetmap.org/?mlat={{ hospital.latitude }}&amp;mlon={{ hospital.longitude }}#map=16/{{ hospital.latitude }}/{{ hospital.longitude }}" rel="noopener" target="_blank">{{ ui.icon('external') }} Open in OpenStreetMap</a>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+{{ ui.leaflet_js() }}
+<script src="{{ url_for('static', filename='js/interactive.js') }}" defer></script>
+{% endblock %}

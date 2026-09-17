@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Become a donor{% endblock %}
+{% block head %}{{ ui.leaflet_css() }}{% endblock %}
+{% block content %}
+<section class="section section-tight">
+  <div class="container">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">Takes about two minutes</p>
+        <h1>Become a donor</h1>
+        <p class="lead">We'll only alert you about requests near you that your blood group can help with.</p>
+      </div>
+    </div>
+
+    {% if errors %}
+    <div class="alert alert-error" role="alert">{{ ui.icon('alert') }}<p>Please fix the {{ errors|length }} highlighted {{ 'problem' if errors|length == 1 else 'problems' }} below.</p></div>
+    {% endif %}
+
+    <div class="split split-wide-aside">
+      <form method="post" class="card form-card stack" id="register-form" novalidate>
+        {{ ui.csrf() }}
+        <fieldset class="form-section">
+          <legend>About you</legend>
+          <div class="grid grid-2">
+            {{ ui.input('name', 'Full name', form, errors, autocomplete='name', maxlength=120) }}
+            {{ ui.input('email', 'Email', form, errors, type='email', autocomplete='email') }}
+            {{ ui.input('phone', 'Phone number', form, errors, type='tel', required=false, autocomplete='tel', hint='Shared with a hospital only when you pledge.') }}
+            {{ ui.input('date_of_birth', 'Date of birth', form, errors, type='date', autocomplete='bday', hint='You must be at least 18.') }}
+            {{ ui.select('gender', 'Gender', [('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')], form, errors) }}
+          </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+          <legend>Health</legend>
+          <div class="grid grid-2">
+            {{ ui.select('blood_group', 'Blood group', BLOOD_GROUPS_PAIRS, form, errors) }}
+            {{ ui.input('weight_kg', 'Weight (kg)', form, errors, type='number', min=20, max=250, step='0.1') }}
+            {{ ui.select('health_issues', 'Ongoing health condition', health_issues.items(), form, errors, hint='This helps the blood bank prepare. It doesn\'t stop you registering.') }}
+          </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+          <legend>Where you are</legend>
+          {{ ui.location_picker(form, errors, label='Home area', hint='Pick roughly where you live or work. Hospitals only ever see a position rounded to about 1 km.') }}
+        </fieldset>
+
+        <fieldset class="form-section">
+          <legend>Account security</legend>
+          <div class="grid grid-2">
+            {{ ui.input('password', 'Password', form, errors, type='password', autocomplete='new-password', hint='At least 8 characters.') }}
+            {{ ui.input('confirm_password', 'Confirm password', form, errors, type='password', autocomplete='new-password') }}
+          </div>
+          <div class="strength" data-strength-for="password" aria-live="polite" hidden>
+            <div class="strength-bar" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+            <p class="strength-text" data-strength-text></p>
+          </div>
+        </fieldset>
+
+        <div class="field checkbox-field">
+          <input type="checkbox" id="consent" name="consent"{% if form.get('consent') == 'on' %} checked{% endif %} required{{ ui.described_by(errors, 'consent', None) }}>
+          <label for="consent">I agree to the <a href="{{ url_for('main.terms') }}">terms of use</a> and <a href="{{ url_for('main.privacy') }}">privacy policy</a>, and I understand that blood donation is voluntary and unpaid.</label>
+          {{ ui.field_error(errors, 'consent') }}
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-large btn-block">Create donor account</button>
+        <p class="auth-switch">Already registered? <a href="{{ url_for('auth.donor_login') }}">Log in</a></p>
+      </form>
+
+      <aside class="sticky-aside aside-first" aria-label="Registration progress">
+        <div class="donor-card" data-donor-card data-give-to='{{ give_to|tojson }}' aria-hidden="true">
+          <div class="drop"></div>
+          <div class="donor-card-top">
+            <div>
+              <p class="donor-card-label">BloodConnect donor</p>
+              <p class="donor-card-name" data-card="name">Your name</p>
+            </div>
+            <span class="donor-card-group" data-card="blood_group">?</span>
+          </div>
+          <div class="donor-card-meta">
+            <span data-card="age">Age —</span>
+            <span data-card="weight">Weight —</span>
+            <span data-card="location">No home area yet</span>
+          </div>
+          <div>
+            <p class="donor-card-label">Can give to</p>
+            <div class="chips" data-card="give_to"><span class="chip-group">Pick a blood group</span></div>
+          </div>
+        </div>
+        <div class="card completeness desktop-only" data-completeness="register-form">
+          <h2 class="card-title">{{ ui.icon('check') }} <span data-completeness-count>0 of 6 done</span></h2>
+          <progress max="6" value="0" data-completeness-bar aria-label="Registration progress"></progress>
+          <ul>
+            <li data-fields="name email">Name and email</li>
+            <li data-fields="date_of_birth gender">Date of birth and gender</li>
+            <li data-fields="blood_group weight_kg health_issues">Blood group, weight and health</li>
+            <li data-fields="latitude longitude">Home area on the map</li>
+            <li data-fields="password confirm_password">A password (twice)</li>
+            <li data-fields="consent">Agree to the terms</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+{{ ui.leaflet_js() }}
+<script src="{{ url_for('static', filename='js/location-picker.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/forms.js') }}" defer></script>
+{% endblock %}

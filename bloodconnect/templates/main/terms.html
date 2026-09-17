@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Terms of use{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div class="container">
+    <div class="page-header-inner">
+      <p class="eyebrow">Legal</p>
+      <h1>Terms of use</h1>
+      <p class="muted">Last updated: 17 September 2026</p>
+    </div>
+  </div>
+</section>
+
+<section class="section section-tight">
+  <div class="container doc">
+    <article class="prose">
+      <p>By creating an account or using BloodConnect, you agree to these terms. If you don't agree, please don't use the service.</p>
+
+      <h2 id="what">1. What BloodConnect is</h2>
+      <p>BloodConnect helps hospitals contact nearby voluntary blood donors. It is not a blood bank, a medical provider or an emergency service. In an emergency, call 112.</p>
+
+      <h2 id="donors">2. Donors</h2>
+      <ul>
+        <li>You must be at least 18 years old and give accurate information about yourself.</li>
+        <li>Answer the eligibility questions honestly. The blood bank's medical officer makes the final decision on whether you can donate.</li>
+        <li>If you pledge and then can't go, please cancel the pledge so the hospital can find someone else.</li>
+        <li>Donation is voluntary. You must not ask for or accept payment for blood.</li>
+      </ul>
+
+      <h2 id="hospitals">3. Hospitals</h2>
+      <ul>
+        <li>Only register an organisation you're authorised to represent.</li>
+        <li>Only raise requests for genuine clinical need, and close them once they're fulfilled.</li>
+        <li>Use donor contact details and arrival times only to coordinate the donation they pledged for.</li>
+      </ul>
+
+      <h2 id="accounts">4. Accounts</h2>
+      <p>Keep your password private. We may suspend accounts that give false information, misuse donor details or send misleading requests.</p>
+
+      <h2 id="guarantees">5. No guarantees</h2>
+      <p>We work hard to keep BloodConnect available and accurate, but we can't guarantee that a donor will respond or that blood will be available. We aren't responsible for medical decisions or outcomes.</p>
+
+      <h2 id="privacy">6. Privacy</h2>
+      <p>Our <a href="{{ url_for('main.privacy') }}">privacy policy</a> explains what data we collect and how it's used.</p>
+
+      <h2 id="changes">7. Changes</h2>
+      <p>We may update these terms. We'll change the date at the top of this page when we do.</p>
+    </article>
+    <nav class="toc" aria-label="On this page" data-toc>
+      <p class="toc-title">On this page</p>
+      <a href="#what">What BloodConnect is</a>
+      <a href="#donors">Donors</a>
+      <a href="#hospitals">Hospitals</a>
+      <a href="#accounts">Accounts</a>
+      <a href="#guarantees">No guarantees</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#changes">Changes</a>
+    </nav>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Privacy policy{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div class="container">
+    <div class="page-header-inner">
+      <p class="eyebrow">Legal</p>
+      <h1>Privacy policy</h1>
+      <p class="muted">Last updated: 17 September 2026</p>
+    </div>
+  </div>
+</section>
+
+<section class="section section-tight">
+  <div class="container doc">
+    <article class="prose">
+      <h2 id="collect">What we collect</h2>
+      <ul>
+        <li><strong>Donors:</strong> name, email, optional phone number, date of birth, gender, weight, blood group, any declared health condition, home location, availability and last donation date.</li>
+        <li><strong>Hospitals:</strong> name, contact details, address, location and hospital type.</li>
+        <li><strong>Requests:</strong> patient name, gender, optional weight, blood group, units, urgency and notes, entered by the hospital.</li>
+        <li><strong>Activity:</strong> pledges, donation outcomes, which alerts were sent, and the latest arrival time and distance while a donor uses directions.</li>
+      </ul>
+      <p>We don't store your answers to the eligibility questions, or your live position.</p>
+
+      <h2 id="use">How it's used</h2>
+      <ul>
+        <li>To match donors with compatible requests nearby, and to work out when a donor can donate again.</li>
+        <li>To send donation alerts and password reset emails.</li>
+        <li>To show hospitals who has pledged for their requests and roughly when they'll arrive.</li>
+      </ul>
+
+      <h2 id="who-sees">Who can see what</h2>
+      <ul>
+        <li>Before you pledge, a hospital sees only your blood group, your approximate position (rounded to about 1 km) and your distance. It doesn't see your name or contact details.</li>
+        <li>When you pledge for a request, that hospital sees your name, email and phone number so it can coordinate your donation.</li>
+        <li>While you use directions to the hospital, it sees your estimated arrival time and the distance left, never your position.</li>
+        <li>Donors never see patient names or clinical notes.</li>
+        <li>We don't sell or share personal data for advertising.</li>
+      </ul>
+
+      <h2 id="services">Services we rely on</h2>
+      <ul>
+        <li><strong>OpenStreetMap</strong> map tiles are loaded by your browser, so OpenStreetMap receives your IP address.</li>
+        <li><strong>OpenRouteService</strong> receives your current position and the hospital's position (not your identity) when you request directions.</li>
+        <li><strong>An email provider</strong> delivers alerts and password reset emails.</li>
+      </ul>
+
+      <h2 id="security">Security</h2>
+      <p>Passwords are stored as salted hashes. Sessions use secure, HTTP-only cookies, and forms are protected against cross-site request forgery. No system is perfectly secure, so please use a unique password.</p>
+
+      <h2 id="cookies">Cookies and notifications</h2>
+      <p>We use one essential cookie to keep you logged in. We don't use tracking or advertising cookies. Desktop notifications are only shown if you turn them on in your browser.</p>
+
+      <h2 id="choices">Your choices</h2>
+      <ul>
+        <li>Update your details or location on your profile page at any time.</li>
+        <li>Turn off availability to stop receiving alerts.</li>
+        <li>Delete your donor account from your profile page. This permanently removes your personal data and pledges.</li>
+      </ul>
+
+      <h2 id="contact">Contact</h2>
+      <p>For privacy questions, <a href="https://github.com/RashiShah08/Blood-Donation/issues" rel="noopener">open an issue on GitHub</a>.</p>
+    </article>
+    <nav class="toc" aria-label="On this page" data-toc>
+      <p class="toc-title">On this page</p>
+      <a href="#collect">What we collect</a>
+      <a href="#use">How it's used</a>
+      <a href="#who-sees">Who can see what</a>
+      <a href="#services">Services we rely on</a>
+      <a href="#security">Security</a>
+      <a href="#cookies">Cookies and notifications</a>
+      <a href="#choices">Your choices</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "hospital/_shell.html" %}
+{% block title %}New blood request{% endblock %}
+{% block breadcrumbs %}<a href="{{ url_for('hospital.dashboard') }}">Overview</a><span aria-hidden="true">/</span><span aria-current="page">New request</span>{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>New blood request</h1>
+    <p class="muted">Patient details are visible only to your hospital. Donors see your hospital name, blood group, urgency and units needed.</p>
+  </div>
+</div>
+
+{% if errors %}
+<div class="alert alert-error" role="alert">{{ ui.icon('alert') }}<p>Please fix the highlighted fields below.</p></div>
+{% endif %}
+
+<div class="split split-wide-aside">
+  <form method="post" class="card form-card stack" id="request-form" novalidate>
+    {{ ui.csrf() }}
+    <fieldset class="form-section">
+      <legend>Patient</legend>
+      <div class="grid grid-2">
+        {{ ui.input('patient_name', 'Patient name', form, errors, maxlength=120) }}
+        {{ ui.select('patient_gender', 'Gender', [('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')], form, errors) }}
+        {{ ui.input('patient_weight_kg', 'Weight (kg)', form, errors, type='number', required=false, min=1, max=250, step='0.1') }}
+      </div>
+    </fieldset>
+    <fieldset class="form-section">
+      <legend>What's needed</legend>
+      <div class="grid grid-2">
+        {{ ui.select('blood_group', 'Blood group', BLOOD_GROUPS_PAIRS, form, errors) }}
+        {{ ui.input('units_required', 'Units required', form, errors, type='number', min=1, max=50, step=1) }}
+        {{ ui.select('urgency', 'Urgency', [('critical', 'Critical: needed within hours'), ('high', 'High: needed today'), ('medium', 'Medium: needed in 1 to 2 days'), ('low', 'Low: planned procedure')], form, errors) }}
+      </div>
+      {{ ui.textarea('clinical_notes', 'Notes for your team', form, errors, maxlength=500, hint='Only visible to your hospital.') }}
+    </fieldset>
+    <div class="button-row">
+      <button type="submit" class="btn btn-primary">Create request</button>
+      <a class="btn btn-ghost" href="{{ url_for('hospital.dashboard') }}">Cancel</a>
+    </div>
+  </form>
+
+  <aside class="sticky-aside" data-request-preview data-compat='{{ compat|tojson }}' aria-label="Live preview">
+    <section class="panel">
+      <div class="panel-head"><h2>What donors will see</h2><span class="live-pill">Preview</span></div>
+      <div class="panel-body">
+        <div class="preview-request" aria-hidden="true">
+          <div class="preview-row">
+            <span class="blood-badge" data-preview="blood_group">—</span>
+            <div>
+              <div class="request-head"><h3>{{ current_hospital.name }}</h3><span class="badge badge-urgency-high" data-preview="urgency" hidden></span></div>
+              <p class="preview-meta">{{ current_hospital.city }} · nearby donors · just now</p>
+            </div>
+          </div>
+          <p class="preview-meta"><strong data-preview="units">Units</strong> still needed</p>
+          <span class="preview-cta">I can help</span>
+        </div>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Who can donate</h2></div>
+      <div class="panel-body">
+        <p class="preview-label">Compatible donor blood groups</p>
+        <div class="chips" data-preview="compat">
+          {% for group in BLOOD_GROUPS %}<span class="chip-group" data-group="{{ group }}">{{ group }}</span>{% endfor %}
+        </div>
+        <p class="muted small" data-preview="compat-note" style="margin:0.75rem 0 0">Choose a blood group to see which donors will be alerted.</p>
+      </div>
+    </section>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/forms.js') }}" defer></script>
+{% endblock %}

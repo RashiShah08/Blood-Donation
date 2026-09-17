@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block surface %}product{% endblock %}
+{% block theme_color %}#f6f6f8{% endblock %}
+{% block body %}
+{% set commands = [
+  {"group": "Pages", "label": "Overview", "url": url_for('hospital.dashboard'), "icon": "layout", "keywords": "dashboard home requests stats"},
+  {"group": "Pages", "label": "Live ops console", "url": url_for('hospital.ops'), "icon": "activity", "keywords": "live map eta arrivals operations"},
+  {"group": "Actions", "label": "New blood request", "url": url_for('hospital.new_request'), "icon": "plus", "keywords": "create add request blood"},
+  {"group": "Help", "label": "How it works", "url": url_for('main.how_it_works'), "icon": "info", "keywords": "guide process compatibility"},
+  {"group": "Help", "label": "FAQ", "url": url_for('main.faq'), "icon": "info", "keywords": "questions help"},
+  {"group": "Help", "label": "Privacy policy", "url": url_for('main.privacy'), "icon": "shield", "keywords": "privacy data"},
+] %}
+<div class="app-shell">
+  <aside class="sidebar" id="site-nav" aria-label="Hospital navigation">
+    <a class="brand" href="{{ url_for('hospital.dashboard') }}"><span class="brand-mark">{{ ui.icon('drop') }}</span><span>BloodConnect</span></a>
+    <nav class="side-nav" aria-label="Main">
+      <ul>
+        {{ ui.side_link('hospital.dashboard', 'Overview', 'layout') }}
+        {{ ui.side_link('hospital.ops', 'Live ops', 'activity', live=true) }}
+        {{ ui.side_link('hospital.new_request', 'New request', 'plus') }}
+      </ul>
+    </nav>
+    <div class="side-section">
+      <p class="side-label">Help</p>
+      <ul>
+        <li><a href="{{ url_for('main.how_it_works') }}">How it works</a></li>
+        <li><a href="{{ url_for('main.faq') }}">FAQ</a></li>
+        <li><a href="{{ url_for('main.privacy') }}">Privacy</a></li>
+      </ul>
+    </div>
+    <div class="side-footer">
+      <div class="side-account">
+        <span class="avatar-square" aria-hidden="true">{{ ui.initials(current_hospital.name) }}</span>
+        <div>
+          <p class="side-account-name">{{ current_hospital.name }}</p>
+          <p class="side-account-meta">{{ current_hospital.city }}{% if current_hospital.is_verified %} · Verified{% endif %}</p>
+        </div>
+      </div>
+      <form method="post" action="{{ url_for('auth.logout') }}">
+        {{ ui.csrf() }}
+        <button type="submit" class="btn btn-ghost btn-block">{{ ui.icon('logout') }} Log out</button>
+      </form>
+    </div>
+  </aside>
+
+  <div class="app-main">
+    <header class="topbar">
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        {{ ui.icon('menu') }}<span class="visually-hidden">Menu</span>
+      </button>
+      <nav class="breadcrumbs" aria-label="Breadcrumb">{% block breadcrumbs %}{% endblock %}</nav>
+      <button type="button" class="palette-trigger" data-palette-open aria-haspopup="dialog" aria-keyshortcuts="Control+K" aria-label="Search or jump to">
+        {{ ui.icon('search') }}<span class="palette-text">Search or jump to…</span><kbd>Ctrl K</kbd>
+      </button>
+      <div class="topbar-actions">{% block topbar_actions %}{% endblock %}</div>
+    </header>
+    <main id="main" tabindex="-1" class="page" data-hospital-live data-ops-url="{{ url_for('hospital.ops_api') }}">
+      {{ ui.flashes() }}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<dialog class="palette" data-palette aria-label="Search pages and requests"
+        data-ops-url="{{ url_for('hospital.ops_api') }}"
+        data-sprite="{{ url_for('static', filename='img/icons.svg') }}"
+        data-commands='{{ commands|tojson }}'>
+  <div class="palette-search">
+    {{ ui.icon('search') }}
+    <label class="visually-hidden" for="palette-input">Search pages, requests and actions</label>
+    <input id="palette-input" type="text" placeholder="Search pages, requests and actions…" autocomplete="off" spellcheck="false"
+           role="combobox" aria-expanded="true" aria-controls="palette-list" aria-autocomplete="list">
+  </div>
+  <ul class="palette-list" id="palette-list" role="listbox" aria-label="Results"></ul>
+  <div class="palette-foot" aria-hidden="true"><span><kbd>↑</kbd> <kbd>↓</kbd> move</span><span><kbd>Enter</kbd> open</span><span><kbd>Esc</kbd> close</span></div>
+</dialog>
+{% endblock %}
+{% block layout_scripts %}
+<script src="{{ url_for('static', filename='js/hospital-app.js') }}" defer></script>
+{% endblock %}

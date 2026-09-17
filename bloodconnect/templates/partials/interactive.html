@@ -1,0 +1,88 @@
+{% import "macros.html" as ui with context %}
+
+{% macro explorer_summary(group, entry) -%}
+{%- if group == 'O-' -%}
+O- is the universal red cell donor: it can go to all 8 groups, but can only receive O-.
+{%- elif group == 'AB+' -%}
+AB+ is the universal red cell recipient: it can receive from all 8 groups, but can only give to AB+.
+{%- else -%}
+{{ group }} can give to {{ entry.give_to|length }} groups and receive from {{ entry.receive_from|length }}.
+{%- endif -%}
+{%- endmacro %}
+
+{% macro compat_explorer(compat, selected="O-", heading="Who can your blood help?", eyebrow="Try it") -%}
+<div class="explorer" data-compat-explorer data-compat='{{ compat|tojson }}'>
+  <div>
+    <p class="eyebrow">{{ eyebrow }}</p>
+    <h2>{{ heading }}</h2>
+    <p class="lead">Pick a blood group to see who it can give red cells to, and who it can receive them from.</p>
+    <div class="group-picker" role="group" aria-label="Choose a blood group">
+      {% for group in BLOOD_GROUPS %}
+      <button type="button" class="group-btn" data-group="{{ group }}" aria-pressed="{{ 'true' if group == selected else 'false' }}">{{ group }}</button>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="explorer-result">
+    <p class="explorer-summary" data-explorer-summary aria-live="polite">{{ explorer_summary(selected, compat[selected]) }}</p>
+    <div class="flow">
+      <h3>{{ ui.icon('heart') }} Can give to</h3>
+      <div class="chips" data-flow="give_to">
+        {% for group in BLOOD_GROUPS %}<span class="chip-group{% if group in compat[selected].give_to %} is-match{% endif %}" data-group="{{ group }}">{{ group }}</span>{% endfor %}
+      </div>
+    </div>
+    <div class="flow">
+      <h3>{{ ui.icon('drop') }} Can receive from</h3>
+      <div class="chips" data-flow="receive_from">
+        {% for group in BLOOD_GROUPS %}<span class="chip-group{% if group in compat[selected].receive_from %} is-match{% endif %}" data-group="{{ group }}">{{ group }}</span>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro quick_check(rules, show_cta=true) -%}
+<div class="quick-check" data-quick-check data-rules='{{ rules|tojson }}'>
+  <div>
+    <p class="eyebrow">30-second check</p>
+    <h2>Could you donate?</h2>
+    <p class="muted">Move the sliders. This follows India's NBTC donor rules; the blood bank always does a full health check before you give blood.</p>
+    <form class="quick-form" data-quick-form novalidate>
+      <div class="field range-field">
+        <label for="qc-age">Age: <output for="qc-age" data-output="age">25</output> years</label>
+        <input id="qc-age" name="age" type="range" min="16" max="70" step="1" value="25">
+      </div>
+      <div class="field range-field">
+        <label for="qc-weight">Weight: <output for="qc-weight" data-output="weight">60</output> kg</label>
+        <input id="qc-weight" name="weight" type="range" min="35" max="120" step="1" value="60">
+      </div>
+      <div class="field">
+        <label for="qc-gender">Gender</label>
+        <select id="qc-gender" name="gender">
+          <option value="Female">Female</option>
+          <option value="Male">Male</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="qc-days">Last blood donation</label>
+        <select id="qc-days" name="days">
+          <option value="">Never</option>
+          <option value="30">About a month ago</option>
+          <option value="60">About 2 months ago</option>
+          <option value="95">About 3 months ago</option>
+          <option value="125">About 4 months ago</option>
+          <option value="200">6 months ago or more</option>
+        </select>
+      </div>
+    </form>
+  </div>
+  <div class="verdict" data-verdict data-state="ok" aria-live="polite">
+    <span data-verdict-icon="ok">{{ ui.icon('check', 'verdict-icon') }}</span>
+    <span data-verdict-icon="wait" hidden>{{ ui.icon('clock', 'verdict-icon') }}</span>
+    <p class="verdict-title" data-verdict-title>You could likely donate</p>
+    <ul data-verdict-reasons hidden></ul>
+    <p data-verdict-note>You'll answer a short health questionnaire before each pledge.</p>
+    {% if show_cta %}<a class="btn btn-primary" href="{{ url_for('auth.donor_register') }}" data-verdict-cta>Become a donor</a>{% endif %}
+  </div>
+</div>
+{%- endmacro %}

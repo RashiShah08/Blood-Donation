@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% from "partials/interactive.html" import quick_check with context %}
+{% block title %}For donors{% endblock %}
+{% block description %}Who can donate blood in India, how to prepare, and what to expect before and after donating.{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div class="container">
+    <div class="page-header-inner">
+      <p class="eyebrow">Donor guidelines</p>
+      <h1>Everything you need before you give blood</h1>
+      <p class="lead">Based on India's National Blood Transfusion Council (NBTC) donor selection guidelines. The blood bank's medical officer always makes the final decision.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section section-tight">
+  <div class="container">
+    {{ quick_check(rules) }}
+  </div>
+</section>
+
+<section class="section section-tight">
+  <div class="container doc">
+    <div class="doc-body">
+      <div class="grid grid-2">
+        <article class="card">
+          <h2 class="card-title" id="who-can-donate">{{ ui.icon('check') }} Who can donate</h2>
+          <ul class="checklist">
+            <li>Aged {{ facts.min_age }} to {{ facts.max_age }} years</li>
+            <li>Weigh at least {{ facts.min_weight }} kg</li>
+            <li>Haemoglobin of at least 12.5 g/dL (checked at the blood bank)</li>
+            <li>Feeling healthy, with no fever or infection</li>
+            <li>At least {{ facts.male_interval }} days (men) or {{ facts.female_interval }} days (women) since your last whole blood donation</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h2 class="card-title" id="when-to-wait">{{ ui.icon('clock') }} When to wait</h2>
+          <ul class="checklist checklist-wait">
+            <li>15 days after a cold, fever, antibiotics or most vaccines</li>
+            <li>3 months after malaria</li>
+            <li>6 months after dengue, chikungunya, minor surgery or a tooth extraction</li>
+            <li>12 months after major surgery, a tattoo, a piercing or a transfusion</li>
+            <li>During pregnancy, breastfeeding or within a year of giving birth</li>
+          </ul>
+        </article>
+      </div>
+
+      <div class="prose">
+        <h2 id="before">Before you donate</h2>
+        <ul>
+          <li>Eat a normal meal and drink plenty of water in the hours before.</li>
+          <li>Get a good night's sleep and avoid alcohol for 24 hours.</li>
+          <li>Carry a photo ID and a list of any medicines you take.</li>
+          <li>Wear a top with sleeves that roll up easily.</li>
+        </ul>
+        <h2 id="at-the-blood-bank">At the blood bank</h2>
+        <p>Expect registration, a short health check (weight, blood pressure, pulse and haemoglobin) and a private interview. The donation itself usually takes 8 to 10 minutes. Plan for about an hour in total.</p>
+        <h2 id="after">After you donate</h2>
+        <ul>
+          <li>Rest for 10 to 15 minutes and have the refreshments offered.</li>
+          <li>Drink extra fluids and avoid heavy exercise for the rest of the day.</li>
+          <li>If you feel faint, lie down with your feet raised.</li>
+          <li>If you feel unwell in the following days, call the blood bank.</li>
+        </ul>
+      </div>
+
+      <div class="callout">
+        <p><strong>Donation is voluntary and unpaid.</strong> It's against the law in India to sell blood or pay donors, and BloodConnect never does.</p>
+        <a class="btn btn-primary" href="{{ url_for('auth.donor_register') }}">Become a donor</a>
+      </div>
+    </div>
+    <nav class="toc" aria-label="On this page" data-toc>
+      <p class="toc-title">On this page</p>
+      <a href="#who-can-donate">Who can donate</a>
+      <a href="#when-to-wait">When to wait</a>
+      <a href="#before">Before you donate</a>
+      <a href="#at-the-blood-bank">At the blood bank</a>
+      <a href="#after">After you donate</a>
+    </nav>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/interactive.js') }}" defer></script>
+{% endblock %}

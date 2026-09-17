@@ -1,0 +1,118 @@
+{% import "macros.html" as ui with context %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% if false %}{% block title %}{% endblock %}{% endif %}{# declares the block so pages may omit it #}
+  {% set page_title = self.title() | trim %}
+  <title>{% if page_title %}{{ page_title }} · BloodConnect{% else %}BloodConnect: blood when it's needed most{% endif %}</title>
+  <meta name="description" content="{% block description %}BloodConnect connects hospitals that urgently need blood with nearby, compatible, voluntary donors.{% endblock %}">
+  <meta name="theme-color" content="{% block theme_color %}#fffdfc{% endblock %}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="BloodConnect">
+  <meta property="og:title" content="{{ page_title or 'BloodConnect' }}">
+  <meta property="og:description" content="{{ self.description() | trim }}">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body data-surface="{% block surface %}community{% endblock %}">
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  {% block body %}
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="{{ url_for('main.home') }}">
+        <span class="brand-mark">{{ ui.icon('drop') }}</span><span>BloodConnect</span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        {{ ui.icon('menu') }}<span class="visually-hidden">Menu</span>
+      </button>
+      <nav id="site-nav" class="site-nav" aria-label="Main">
+        <ul class="nav-links">
+          {% if current_donor %}
+            {{ ui.nav_link('donor.dashboard', 'Dashboard') }}
+            {{ ui.nav_link('donor.impact', 'My impact') }}
+            {{ ui.nav_link('donor.profile', 'Profile') }}
+          {% elif current_hospital %}
+            {{ ui.nav_link('hospital.dashboard', 'Hospital dashboard') }}
+            {{ ui.nav_link('hospital.ops', 'Live ops') }}
+          {% else %}
+            {{ ui.nav_link('main.how_it_works', 'How it works') }}
+            {{ ui.nav_link('main.for_donors', 'For donors') }}
+            {{ ui.nav_link('main.for_patients', 'For patients') }}
+            {{ ui.nav_link('main.faq', 'FAQ') }}
+          {% endif %}
+        </ul>
+        <div class="nav-actions">
+          {% if current_donor or current_hospital %}
+            {% if current_donor %}
+            <span class="account-chip"><span class="avatar" aria-hidden="true">{{ ui.initials(current_donor.name) }}</span><span class="visually-hidden">Logged in as </span>{{ current_donor.name.split(' ')[0] }}</span>
+            {% endif %}
+            <form method="post" action="{{ url_for('auth.logout') }}">
+              {{ ui.csrf() }}
+              <button type="submit" class="btn btn-ghost">{{ ui.icon('logout') }} Log out</button>
+            </form>
+          {% else %}
+            <a class="btn btn-ghost" href="{{ url_for('auth.hospital_login') }}">Hospitals</a>
+            <a class="btn btn-primary" href="{{ url_for('auth.donor_register') }}">Become a donor</a>
+          {% endif %}
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    {{ ui.flashes('container') }}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="{{ url_for('main.home') }}"><span class="brand-mark">{{ ui.icon('drop') }}</span><span>BloodConnect</span></a>
+        <p>Connecting hospitals with nearby voluntary donors.</p>
+        <p class="emergency-note">{{ ui.icon('alert') }} In a medical emergency, call <a href="tel:112">112</a>.</p>
+      </div>
+      <nav aria-label="Get involved">
+        <h2 class="footer-heading">Get involved</h2>
+        <ul>
+          <li><a href="{{ url_for('auth.donor_register') }}">Become a donor</a></li>
+          <li><a href="{{ url_for('auth.donor_login') }}">Donor login</a></li>
+          <li><a href="{{ url_for('auth.hospital_register') }}">Register a hospital</a></li>
+          <li><a href="{{ url_for('auth.hospital_login') }}">Hospital login</a></li>
+        </ul>
+      </nav>
+      <nav aria-label="Learn">
+        <h2 class="footer-heading">Learn</h2>
+        <ul>
+          <li><a href="{{ url_for('main.how_it_works') }}">How it works</a></li>
+          <li><a href="{{ url_for('main.for_donors') }}">For donors</a></li>
+          <li><a href="{{ url_for('main.for_patients') }}">For patients</a></li>
+          <li><a href="{{ url_for('main.faq') }}">FAQ</a></li>
+          <li><a href="{{ url_for('main.about') }}">About</a></li>
+        </ul>
+      </nav>
+      <nav aria-label="Legal">
+        <h2 class="footer-heading">Legal &amp; contact</h2>
+        <ul>
+          <li><a href="{{ url_for('main.terms') }}">Terms of use</a></li>
+          <li><a href="{{ url_for('main.privacy') }}">Privacy policy</a></li>
+          <li><a href="https://github.com/RashiShah08/Blood-Donation/issues" rel="noopener">Contact us (GitHub)</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="container footer-bottom">
+      <p>© {{ current_year }} BloodConnect. Blood donation is always voluntary and unpaid.</p>
+    </div>
+  </footer>
+  {% endblock %}
+
+  <div class="toast-region" id="toast-region" aria-live="polite" data-icons="{{ url_for('static', filename='img/icons.svg') }}"></div>
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  {% block layout_scripts %}{% endblock %}
+  {% block scripts %}{% endblock %}
+</body>
+</html>

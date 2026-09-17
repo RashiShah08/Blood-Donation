@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Live ops · {{ hospital.name }}{% endblock %}
+{% block surface %}ops{% endblock %}
+{% block theme_color %}#0a0f15{% endblock %}
+{% block head %}{{ ui.leaflet_css() }}{% endblock %}
+{% block body %}
+<div class="ops" id="ops"
+     data-api-url="{{ url_for('hospital.ops_api') }}"
+     data-hospital-lat="{{ hospital.latitude }}"
+     data-hospital-lng="{{ hospital.longitude }}"
+     data-hospital-name="{{ hospital.name }}">
+  <header class="ops-bar">
+    <a class="ops-brand" href="{{ url_for('hospital.dashboard') }}">{{ ui.icon('drop') }} <span class="ops-brand-app">BLOODCONNECT /</span> LIVE OPS</a>
+    <h1>{{ hospital.name }}</h1>
+    <div class="ops-bar-right">
+      <span class="live" data-live aria-live="polite">LIVE</span>
+      <span class="ops-updated">Updated <time data-updated>—</time></span>
+      <button type="button" class="icon-btn" data-sound aria-pressed="false" title="Sound alerts (M)">
+        <span data-sound-icon="off">{{ ui.icon('volume-off') }}</span><span data-sound-icon="on" hidden>{{ ui.icon('volume') }}</span>
+        <span class="visually-hidden">Sound alerts</span>
+      </button>
+      <button type="button" class="icon-btn" data-shortcuts-open title="Keyboard shortcuts (?)">{{ ui.icon('keyboard') }}<span class="visually-hidden">Keyboard shortcuts</span></button>
+      <button type="button" class="icon-btn" data-fullscreen title="Fullscreen (F)">{{ ui.icon('maximize') }}<span class="visually-hidden">Toggle fullscreen</span></button>
+      <a class="btn btn-secondary" href="{{ url_for('hospital.dashboard') }}">{{ ui.icon('arrow-left') }} <span class="ops-back-label">Dashboard</span><span class="visually-hidden">Dashboard</span></a>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1" class="ops-main">
+    <dl class="ops-summary" aria-label="Summary">
+      <div class="ops-stat" data-tone="critical"><dt>Open requests</dt><dd data-summary-key="open_requests">—</dd></div>
+      <div class="ops-stat" data-tone="warn"><dt>Units needed</dt><dd data-summary-key="units_needed">—</dd></div>
+      <div class="ops-stat"><dt>Donors on the way</dt><dd data-summary-key="on_the_way">—</dd></div>
+      <div class="ops-stat" data-tone="ok"><dt>Arrived</dt><dd data-summary-key="arrived">—</dd></div>
+    </dl>
+
+    <div class="ops-grid">
+      <section class="ops-col" aria-labelledby="queue-heading">
+        <div class="ops-col-head"><h2 id="queue-heading">Request queue</h2><a class="btn btn-secondary btn-small" href="{{ url_for('hospital.new_request') }}">{{ ui.icon('plus') }} New</a></div>
+        <div class="ops-scroll">
+          <ul class="queue" data-queue aria-label="Open requests by urgency"></ul>
+          <p class="ops-empty" data-queue-empty hidden>No open requests. New requests appear here automatically.</p>
+        </div>
+      </section>
+
+      <section class="ops-col ops-map-col" aria-label="Map">
+        <div class="map ops-map" data-map role="group" aria-label="Map of the hospital and available donors nearby"></div>
+        <div class="ops-map-toolbar">
+          <div class="legend" aria-hidden="true">
+            <span><i style="background:#ff5a5f;border-radius:2px"></i>Hospital</span>
+            <span><i style="background:#7fb2ff"></i>Available</span>
+            <span><i style="background:#f5b454"></i>Alerted</span>
+            <span><i style="background:#5fd49a"></i>Pledged</span>
+          </div>
+          <div class="cluster">
+            <label for="ops-radius">Radius</label>
+            <select id="ops-radius" data-radius>
+              {% for radius in radii %}<option value="{{ radius }}"{% if radius == 5 %} selected{% endif %}>{{ radius }} km</option>{% endfor %}
+            </select>
+            <button type="button" class="btn btn-urgent" data-notify disabled>{{ ui.icon('mail') }} <span data-notify-label>Alert donors</span></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="ops-col" aria-labelledby="detail-heading">
+        <div class="ops-col-head"><h2 id="detail-heading">Selected request</h2><a class="btn btn-secondary btn-small" data-detail-link href="{{ url_for('hospital.dashboard') }}" hidden>{{ ui.icon('external') }} Open</a></div>
+        <div class="ops-scroll">
+          <div class="ops-detail" data-detail>
+            <p class="ops-empty">Select a request to see donors on the way.</p>
+          </div>
+          <div class="ops-col-head"><h2>Activity</h2></div>
+          <ol class="feed" data-feed aria-label="Recent activity"></ol>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<dialog class="shortcuts" data-shortcuts aria-labelledby="shortcuts-title">
+  <h2 id="shortcuts-title">Keyboard shortcuts</h2>
+  <dl class="shortcut-list">
+    <dt><kbd>J</kbd><kbd>↓</kbd></dt><dd>Next request</dd>
+    <dt><kbd>K</kbd><kbd>↑</kbd></dt><dd>Previous request</dd>
+    <dt><kbd>A</kbd></dt><dd>Alert donors for the selected request</dd>
+    <dt><kbd>R</kbd></dt><dd>Refresh now</dd>
+    <dt><kbd>M</kbd></dt><dd>Sound alerts on or off</dd>
+    <dt><kbd>F</kbd></dt><dd>Fullscreen</dd>
+    <dt><kbd>?</kbd></dt><dd>Show this list</dd>
+  </dl>
+  <form method="dialog"><button class="btn btn-secondary" type="submit">Close</button></form>
+</dialog>
+{% endblock %}
+{% block scripts %}
+{{ ui.leaflet_js() }}
+<script src="{{ url_for('static', filename='js/ops.js') }}" defer></script>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Frequently asked questions{% endblock %}
+{% block description %}Answers about donating blood in India, requesting blood and using BloodConnect.{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div class="container">
+    <div class="page-header-inner">
+      <p class="eyebrow">Help</p>
+      <h1>Frequently asked questions</h1>
+      <p class="lead">Quick answers about donating, requesting blood and how BloodConnect keeps your information private.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section section-tight">
+  <div class="container doc">
+    <div class="doc-body faq" data-faq>
+      <div class="field faq-search">
+        <label for="faq-search">Search questions</label>
+        <input id="faq-search" type="text" placeholder="Try &quot;tattoo&quot;, &quot;how often&quot; or &quot;privacy&quot;" autocomplete="off" data-faq-search>
+      </div>
+      <p class="faq-empty" data-faq-empty hidden>No questions match your search.</p>
+
+      <h2 id="donating">Donating blood</h2>
+      <details>
+        <summary>Who can donate blood?</summary>
+        <p>In India, people aged {{ facts.min_age }} to {{ facts.max_age }} who weigh at least {{ facts.min_weight }} kg, feel well and have a haemoglobin level of at least 12.5 g/dL can usually donate. Some illnesses, medicines, travel, tattoos and procedures mean waiting for a while. See the <a href="{{ url_for('main.for_donors') }}">donor guidelines</a>.</p>
+      </details>
+      <details>
+        <summary>How often can I donate?</summary>
+        <p>You need to wait at least {{ facts.male_interval }} days (men) or {{ facts.female_interval }} days (women) between whole blood donations. BloodConnect uses your last donation date to work out when you're eligible again.</p>
+      </details>
+      <details>
+        <summary>Can I donate after getting a tattoo or piercing?</summary>
+        <p>You'll need to wait 12 months after a tattoo or body piercing before donating whole blood.</p>
+      </details>
+      <details>
+        <summary>Will I be paid or rewarded?</summary>
+        <p>No. Blood donation in India must be voluntary and unpaid. BloodConnect recognises donors with badges and a certificate of appreciation only.</p>
+      </details>
+      <details>
+        <summary>Does the eligibility check decide whether I can donate?</summary>
+        <p>No. It's a quick screening so you don't make a wasted trip. The medical officer at the blood bank always does the final check.</p>
+      </details>
+
+      <h2 id="requesting">Requesting blood</h2>
+      <details>
+        <summary>Can I request blood for a family member?</summary>
+        <p>Requests are raised by hospitals, so the treating team can confirm what's needed. Please speak to the hospital's blood bank. See <a href="{{ url_for('main.for_patients') }}">for patients and families</a>.</p>
+      </details>
+      <details>
+        <summary>How are donors chosen?</summary>
+        <p>We only include donors who are marked available, whose blood group is compatible, who are within the search radius the hospital picks, and whose last donation was long enough ago.</p>
+      </details>
+
+      <h2 id="using">Using BloodConnect</h2>
+      <details>
+        <summary>Is my information safe and private?</summary>
+        <p>Passwords are stored as secure hashes, never as plain text. Hospitals see only an approximate position and distance for donors who haven't pledged. Your name and phone number are shared with a hospital only when you pledge, and while you use directions it sees only your ETA. You can delete your account at any time. Read the <a href="{{ url_for('main.privacy') }}">privacy policy</a>.</p>
+      </details>
+      <details>
+        <summary>How do I stop getting alerts?</summary>
+        <p>On your dashboard, switch your availability off. Switch it back on whenever you're ready to donate again.</p>
+      </details>
+      <details>
+        <summary>How do I contact the team?</summary>
+        <p>BloodConnect is an open-source project. Please <a href="https://github.com/RashiShah08/Blood-Donation/issues" rel="noopener">open an issue on GitHub</a>.</p>
+      </details>
+    </div>
+    <nav class="toc" aria-label="On this page" data-toc>
+      <p class="toc-title">On this page</p>
+      <a href="#donating">Donating blood</a>
+      <a href="#requesting">Requesting blood</a>
+      <a href="#using">Using BloodConnect</a>
+    </nav>
+  </div>
+</section>
+{% endblock %}

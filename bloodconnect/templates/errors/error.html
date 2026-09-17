@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<section class="container narrow error-page">
+  <p class="error-code">{{ code }}</p>
+  <h1>{{ title }}</h1>
+  <p class="lead">{{ message }}</p>
+  <div class="button-row">
+    <a class="btn btn-primary" href="{{ url_for('main.home') }}">Go to the home page</a>
+    {% if current_donor %}<a class="btn btn-secondary" href="{{ url_for('donor.dashboard') }}">Donor dashboard</a>{% endif %}
+    {% if current_hospital %}<a class="btn btn-secondary" href="{{ url_for('hospital.dashboard') }}">Hospital dashboard</a>{% endif %}
+  </div>
+</section>
+{% endblock %}

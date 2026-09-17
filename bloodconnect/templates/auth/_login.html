@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="auth">
+  <div class="container auth-grid">
+    <div class="auth-card card">
+      <h1>{{ self.heading() }}</h1>
+      <p class="muted">{% block intro %}{% endblock %}</p>
+      {% if error %}
+      <div class="alert alert-error" role="alert">{{ ui.icon('alert') }}<p>{{ error }}</p></div>
+      {% endif %}
+      <form method="post" class="stack" novalidate>
+        {{ ui.csrf() }}
+        {{ ui.input('email', 'Email', form={'email': email}, type='email', autocomplete='email') }}
+        <div class="field">
+          <div class="label-row">
+            <label for="password">Password</label>
+            <a class="label-link" href="{{ url_for('auth.forgot_password', kind=kind) }}">Forgot password?</a>
+          </div>
+          <input id="password" name="password" type="password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Log in</button>
+      </form>
+      <p class="auth-switch">{% block switch %}{% endblock %}</p>
+    </div>
+    <div class="auth-aside">
+      {% block aside %}{% endblock %}
+    </div>
+  </div>
+</section>
+{% endblock %}
