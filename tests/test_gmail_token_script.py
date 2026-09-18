@@ -4,10 +4,13 @@ import base64
 import hashlib
 import http.server
 import importlib.util
+import json
 import threading
 import urllib.parse
 import urllib.request
 from pathlib import Path
+
+import pytest
 
 SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "google_gmail_token.py"
 spec = importlib.util.spec_from_file_location("google_gmail_token", SCRIPT)
@@ -42,3 +45,39 @@ def test_local_callback_captures_the_reply_from_google():
     server.server_close()
     assert server.result == {"code": "4/abc", "state": "xyz"}
     assert "close this tab" in page
+
+
+def write_json(tmp_path, data):
+    path = tmp_path / "client_secret.json"
+    path.write_text(json.dumps(data), encoding="utf-8")
+    return str(path)
+
+
+def test_desktop_client_file_is_read(tmp_path):
+    path = write_json(
+        tmp_path, {"installed": {"client_id": "1-abc.apps.googleusercontent.com", "client_secret": "GOCSPX-x"}}
+    )
+    assert helper.load_client_file(path) == ("1-abc.apps.googleusercontent.com", "GOCSPX-x")
+
+
+def test_web_client_file_is_refused_with_a_fix(tmp_path):
+    path = write_json(tmp_path, {"web": {"client_id": "1-abc.apps.googleusercontent.com", "client_secret": "s"}})
+    with pytest.raises(helper.ClientError, match="Desktop app"):
+        helper.load_client_file(path)
+
+
+def test_missing_or_broken_files_explain_the_problem(tmp_path):
+    with pytest.raises(helper.ClientError, match="Couldn"):
+        helper.load_client_file(str(tmp_path / "nope.json"))
+    broken = tmp_path / "broken.json"
+    broken.write_text("not json", encoding="utf-8")
+    with pytest.raises(helper.ClientError, match="isn"):
+        helper.load_client_file(str(broken))
+
+
+def test_common_paste_mistakes_are_caught_before_the_browser_opens():
+    good_id = "1-abc.apps.googleusercontent.com"
+    assert helper.check_client(good_id, "GOCSPX-secret") == []
+    assert helper.check_client("GOCSPX-secret", good_id)  # swapped
+    assert helper.check_client(good_id, "GOCSPX-sec\x16ret")  # Ctrl+V arrived as a control character
+    assert helper.check_client(good_id, "GOCSPX sec")  # stray space

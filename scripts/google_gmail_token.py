@@ -1,11 +1,12 @@
 """Get a Gmail API refresh token that can only send email (one-time setup).
 
-Run it in your own terminal, not through a chat or CI log, because it prints a secret:
+Run it in your own terminal, not through a chat or CI log, because it prints a secret.
+Easiest: download the OAuth client's JSON file from Google Cloud and pass its path:
 
-    python scripts/google_gmail_token.py
+    python scripts/google_gmail_token.py path/to/client_secret_....json
 
-It asks for the client ID and secret of a Google Cloud OAuth client of type "Desktop app",
-opens Google's consent page in your browser, and prints the refresh token to store as
+Without a file it asks for the client ID and secret instead. The client must be of type
+"Desktop app". The script opens Google's consent page in your browser and prints the refresh token to store as
 GMAIL_REFRESH_TOKEN. The only permission requested is gmail.send: the token can send mail
 as you but can't read, change or delete anything in the mailbox. Nothing is written to disk.
 """
@@ -22,6 +23,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import webbrowser
+from pathlib import Path
 
 SCOPE = "https://www.googleapis.com/auth/gmail.send"
 AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
@@ -51,6 +53,41 @@ def authorization_url(client_id: str, redirect_uri: str, state: str, challenge: 
     return f"{AUTH_URL}?{urllib.parse.urlencode(params)}"
 
 
+class ClientError(Exception):
+    """The OAuth client details are unusable; the message says how to fix them."""
+
+
+def load_client_file(path: str) -> tuple[str, str]:
+    """Client ID and secret from the JSON file Google Cloud lets you download for a client."""
+    try:
+        data = json.loads(Path(path).expanduser().read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise ClientError(f"Couldn't read {path}: {exc.strerror or exc}") from exc
+    except ValueError as exc:
+        raise ClientError(f"{path} isn't a JSON file downloaded from Google Cloud.") from exc
+    if "web" in data and "installed" not in data:
+        raise ClientError(
+            "That file is for a 'Web application' client. Create a client of type 'Desktop app' "
+            "and download its JSON instead."
+        )
+    client = data.get("installed") or {}
+    if not client.get("client_id") or not client.get("client_secret"):
+        raise ClientError(f"{path} has no client ID and secret in it.")
+    return client["client_id"], client["client_secret"]
+
+
+def check_client(client_id: str, client_secret: str) -> list[str]:
+    """Problems that would make Google reject the client, found before opening the browser."""
+    problems = []
+    if not client_id.endswith(".apps.googleusercontent.com"):
+        problems.append("The client ID should end in .apps.googleusercontent.com (did you paste the secret instead?).")
+    if client_secret.endswith(".apps.googleusercontent.com"):
+        problems.append("The client secret looks like a client ID.")
+    if any(ord(character) < 32 or character.isspace() for character in client_secret):
+        problems.append("The client secret contains spaces or control characters (a paste may have gone wrong).")
+    return problems
+
+
 class _CallbackHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):  # noqa: N802 (http.server naming)
         query = urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query)
@@ -72,10 +109,23 @@ class _CallbackHandler(http.server.BaseHTTPRequestHandler):
 
 def main() -> int:
     print(__doc__.split("\n\n")[0], "\n")
-    client_id = input("OAuth client ID: ").strip()
-    client_secret = getpass.getpass("OAuth client secret (input hidden): ").strip()
-    if not client_id or not client_secret:
-        print("Both the client ID and the client secret are needed.")
+    if len(sys.argv) > 1:
+        try:
+            client_id, client_secret = load_client_file(sys.argv[1])
+        except ClientError as exc:
+            print(exc)
+            return 1
+        print(f"Using the client from {sys.argv[1]}.")
+    else:
+        client_id = input("OAuth client ID: ").strip()
+        client_secret = getpass.getpass("OAuth client secret (input hidden): ").strip()
+        if not client_id or not client_secret:
+            print("Both the client ID and the client secret are needed.")
+            return 1
+    problems = check_client(client_id, client_secret)
+    if problems:
+        print("\n".join(problems))
+        print("Tip: download the client's JSON file and pass its path instead of typing the values.")
         return 1
 
     server = http.server.HTTPServer(("127.0.0.1", 0), _CallbackHandler)
@@ -121,6 +171,9 @@ def main() -> int:
             tokens = json.load(response)
     except urllib.error.HTTPError as exc:
         print(f"Google refused the exchange: HTTP {exc.code} {exc.read(300).decode('utf-8', 'replace')}")
+        if exc.code == 401:
+            print("\nThe client ID and secret don't match. Make sure both come from the same 'Desktop app'")
+            print("client, ideally by passing its downloaded JSON file to this script.")
         return 1
 
     refresh_token = tokens.get("refresh_token")
