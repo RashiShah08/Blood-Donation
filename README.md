@@ -31,7 +31,7 @@ Built for the Ignite IT 7.0 hackathon, then rebuilt to be secure, tested and pro
 - Five failed logins for one account lock it for 15 minutes. The count lives in the database, so it holds across
   every server process, and it works the same for unregistered emails, so it never reveals who has an account.
 - Hospitals must be verified before they can email donors, so a stranger can't sign up and spam them.
-- Security headers on every response: HSTS over HTTPS, frame blocking, no MIME sniffing, a strict referrer policy,
+- Security headers on every response: HSTS over HTTPS, frame blocking (only the public information pages can be shown inside other sites), no MIME sniffing, a strict referrer policy,
   and cross-origin isolation. Pages are never cached; versioned static files are cached for a year.
 - The database connection is encrypted and its certificate verified whenever the URL asks for `sslmode=require`.
 - Strict Content Security Policy: no inline scripts, no third-party scripts or styles, Leaflet served from the repo, and no CDNs.

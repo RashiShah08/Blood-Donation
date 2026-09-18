@@ -11,21 +11,22 @@ from .models import Donor, Hospital
 
 DONOR, HOSPITAL = "donor", "hospital"
 
-CONTENT_SECURITY_POLICY = "; ".join(
-    [
-        "default-src 'self'",
-        "script-src 'self'",
-        # Leaflet positions map tiles with inline styles.
-        "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data: https://tile.openstreetmap.org",
-        "connect-src 'self'",
-        "font-src 'self'",
-        "object-src 'none'",
-        "base-uri 'self'",
-        "form-action 'self'",
-        "frame-ancestors 'none'",
-    ]
-)
+def content_security_policy(frame_ancestors: str = "'none'") -> str:
+    return "; ".join(
+        [
+            "default-src 'self'",
+            "script-src 'self'",
+            # Leaflet positions map tiles with inline styles.
+            "style-src 'self' 'unsafe-inline'",
+            "img-src 'self' data: https://tile.openstreetmap.org",
+            "connect-src 'self'",
+            "font-src 'self'",
+            "object-src 'none'",
+            "base-uri 'self'",
+            "form-action 'self'",
+            f"frame-ancestors {frame_ancestors}",
+        ]
+    )
 
 
 def login(kind: str, account_id: int) -> None:
@@ -104,9 +105,15 @@ def init_security(app: Flask) -> None:
     @app.after_request
     def set_security_headers(response):
         headers = response.headers
-        headers.setdefault("Content-Security-Policy", CONTENT_SECURITY_POLICY)
+        # Public information pages may be shown inside other sites (such as a portfolio preview).
+        # A cross-site frame gets no session cookie, so they are always anonymous there.
+        # Account, login and dashboard pages always refuse to be framed.
+        embeddable = request.blueprint == "main" and response.mimetype == "text/html"
+        frame_ancestors = app.config.get("PUBLIC_FRAME_ANCESTORS") if embeddable else None
+        headers.setdefault("Content-Security-Policy", content_security_policy(frame_ancestors or "'none'"))
         headers.setdefault("X-Content-Type-Options", "nosniff")
-        headers.setdefault("X-Frame-Options", "DENY")
+        if not frame_ancestors:
+            headers.setdefault("X-Frame-Options", "DENY")
         headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
         headers.setdefault("Permissions-Policy", "geolocation=(self), camera=(), microphone=(), payment=()")
         # Isolate the page from other sites' windows and stop other sites embedding our files.

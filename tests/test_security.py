@@ -249,13 +249,33 @@ class TestRateLimiting:
 
 class TestHeadersAndErrors:
     def test_security_headers(self, client):
-        headers = client.get("/").headers
+        headers = client.get("/donor/login").headers
         assert "script-src 'self'" in headers["Content-Security-Policy"]
         assert "frame-ancestors 'none'" in headers["Content-Security-Policy"]
         assert headers["X-Frame-Options"] == "DENY"
         assert headers["X-Content-Type-Options"] == "nosniff"
         assert headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
         assert "Strict-Transport-Security" not in headers
+
+    def test_public_pages_can_be_framed_but_account_pages_cannot(self, client, make_donor):
+        for path in ("/", "/how-it-works", "/faq"):
+            headers = client.get(path).headers
+            assert "frame-ancestors https: http://localhost:*" in headers["Content-Security-Policy"]
+            assert "X-Frame-Options" not in headers
+        for path in ("/donor/login", "/hospital/register", "/healthz"):
+            headers = client.get(path).headers
+            assert "frame-ancestors 'none'" in headers["Content-Security-Policy"]
+            assert headers["X-Frame-Options"] == "DENY"
+        login_donor(client, make_donor())
+        assert client.get("/donor/dashboard").headers["X-Frame-Options"] == "DENY"
+
+    def test_framing_can_be_turned_off(self):
+        app = build_app(PUBLIC_FRAME_ANCESTORS=None)
+        with app.app_context():
+            headers = app.test_client().get("/").headers
+            assert "frame-ancestors 'none'" in headers["Content-Security-Policy"]
+            assert headers["X-Frame-Options"] == "DENY"
+        dispose(app)
 
     def test_hsts_when_cookies_are_secure(self):
         app = build_app(SESSION_COOKIE_SECURE=True)

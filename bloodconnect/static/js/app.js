@@ -22,6 +22,14 @@
     });
   }
 
+  // Shown inside another site's frame, only the public pages can load; open account pages in a new tab.
+  if (window.self !== window.top) {
+    for (const link of document.querySelectorAll('a[href^="/donor"], a[href^="/hospital"]')) {
+      link.target = "_blank";
+      link.rel = "noopener";
+    }
+  }
+
   const TOAST_ICONS = { success: "check", error: "alert", info: "info" };
 
   function icon(name) {

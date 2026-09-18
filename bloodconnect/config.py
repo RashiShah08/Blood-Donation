@@ -106,5 +106,8 @@ def build_config() -> dict:
         "SEARCH_RADII_KM": (2, 5, 10, 25),
         "DONOR_REQUEST_RADIUS_KM": env_int("DONOR_REQUEST_RADIUS_KM", 50),
         "MAX_NOTIFICATIONS_PER_SEND": 50,
+        # Sites allowed to show the public information pages in a frame (CSP frame-ancestors).
+        # Empty blocks framing everywhere.
+        "PUBLIC_FRAME_ANCESTORS": os.getenv("PUBLIC_FRAME_ANCESTORS", "https: http://localhost:*").strip() or None,
         "LOG_LEVEL": os.getenv("LOG_LEVEL", "INFO").strip().upper(),
     }
