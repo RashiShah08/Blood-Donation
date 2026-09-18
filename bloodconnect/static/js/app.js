@@ -22,12 +22,17 @@
     });
   }
 
-  // Shown inside another site's frame, only the public pages can load; open account pages in a new tab.
+  // Shown inside another site's frame (such as a portfolio preview), only the public pages can load there.
+  // Account pages and other sites refuse to be framed, so links to them open in a new tab instead.
   if (window.self !== window.top) {
-    for (const link of document.querySelectorAll('a[href^="/donor"], a[href^="/hospital"]')) {
+    const staysInFrame = (link) =>
+      link.origin === window.location.origin && !/^\/(donor|hospital)(\/|$)/.test(link.pathname);
+    document.addEventListener("click", (event) => {
+      const link = event.target.closest?.("a[href]");
+      if (!link || !/^https?:$/.test(link.protocol) || staysInFrame(link)) return;
       link.target = "_blank";
       link.rel = "noopener";
-    }
+    }, true);
   }
 
   const TOAST_ICONS = { success: "check", error: "alert", info: "info" };
