@@ -11,6 +11,7 @@ from .models import Donor, Hospital
 
 DONOR, HOSPITAL = "donor", "hospital"
 
+
 def content_security_policy(frame_ancestors: str = "'none'") -> str:
     return "; ".join(
         [
@@ -25,6 +26,9 @@ def content_security_policy(frame_ancestors: str = "'none'") -> str:
             "base-uri 'self'",
             "form-action 'self'",
             f"frame-ancestors {frame_ancestors}",
+            # Report any violation (e.g. an injected inline script) so regressions are caught early.
+            "report-uri /csp-report",
+            "report-to csp",
         ]
     )
 
@@ -111,6 +115,8 @@ def init_security(app: Flask) -> None:
         embeddable = request.blueprint == "main" and response.mimetype == "text/html"
         frame_ancestors = app.config.get("PUBLIC_FRAME_ANCESTORS") if embeddable else None
         headers.setdefault("Content-Security-Policy", content_security_policy(frame_ancestors or "'none'"))
+        # Named endpoint group for the CSP "report-to" directive (modern Reporting API).
+        headers.setdefault("Reporting-Endpoints", 'csp="/csp-report"')
         headers.setdefault("X-Content-Type-Options", "nosniff")
         if not frame_ancestors:
             headers.setdefault("X-Frame-Options", "DENY")

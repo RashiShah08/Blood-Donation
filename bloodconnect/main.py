@@ -1,6 +1,9 @@
 """Public information pages, health check and redirects from the old URLs."""
 
-from flask import Blueprint, jsonify, redirect, render_template, url_for
+import logging
+from datetime import UTC, datetime, timedelta
+
+from flask import Blueprint, Response, current_app, jsonify, redirect, render_template, request, url_for
 from sqlalchemy import text
 
 from .domain.blood import BLOOD_GROUPS, donor_groups_for, recipient_groups_for
@@ -11,7 +14,9 @@ from .domain.eligibility import (
     MIN_AGE_YEARS,
     MIN_WEIGHT_KG,
 )
-from .extensions import db
+from .extensions import csrf, db, limiter
+
+log = logging.getLogger(__name__)
 
 bp = Blueprint("main", __name__)
 
@@ -78,6 +83,48 @@ def terms():
 @bp.get("/privacy")
 def privacy():
     return render_template("main/privacy.html")
+
+
+ROBOTS_TXT = """User-agent: *
+# Public pages are fine to index; the app and API areas are not useful to crawlers.
+Allow: /$
+Disallow: /donor/
+Disallow: /hospital/
+Disallow: /healthz
+Disallow: /readyz
+Sitemap: {base}/sitemap.xml
+"""
+
+
+@bp.get("/robots.txt")
+def robots_txt():
+    base = (current_app.config.get("PUBLIC_BASE_URL") or request.url_root.rstrip("/")).rstrip("/")
+    return Response(ROBOTS_TXT.format(base=base), mimetype="text/plain")
+
+
+@bp.get("/.well-known/security.txt")
+def security_txt():
+    """RFC 9116 security contact. Expires is always ~1 year out so it stays valid."""
+    base = (current_app.config.get("PUBLIC_BASE_URL") or request.url_root.rstrip("/")).rstrip("/")
+    contact = current_app.config["SECURITY_CONTACT"]
+    if "@" in contact and not contact.startswith(("http", "mailto:")):
+        contact = f"mailto:{contact}"
+    expires = (datetime.now(UTC) + timedelta(days=365)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    body = (
+        f"Contact: {contact}\nExpires: {expires}\nPreferred-Languages: en\nCanonical: {base}/.well-known/security.txt\n"
+    )
+    return Response(body, mimetype="text/plain")
+
+
+@bp.post("/csp-report")
+@csrf.exempt
+@limiter.limit("60 per hour")
+def csp_report():
+    """Browsers POST Content-Security-Policy violations here; we log them and reply 204."""
+    payload = request.get_data(as_text=True)[:2000]
+    if payload:
+        log.warning("CSP violation reported: %s", payload)
+    return "", 204
 
 
 @bp.get("/healthz")

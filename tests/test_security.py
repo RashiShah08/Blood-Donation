@@ -424,3 +424,35 @@ class TestOutputEscapingAndPrivacy:
         login_hospital(client, hospital)
         body = client.get(f"/hospital/requests/{blood_request.id}").get_data(as_text=True)
         assert str(FAR_LOCATION[0]) not in body
+
+
+class TestSecurityTxtRobotsCsp:
+    def test_robots_txt_served(self, client):
+        r = client.get("/robots.txt")
+        assert r.status_code == 200 and r.mimetype == "text/plain"
+        body = r.get_data(as_text=True)
+        assert "User-agent: *" in body
+        assert "Disallow: /donor/" in body and "Disallow: /hospital/" in body
+        assert "Sitemap:" in body
+
+    def test_security_txt_is_valid_rfc9116(self, client):
+        r = client.get("/.well-known/security.txt")
+        assert r.status_code == 200 and r.mimetype == "text/plain"
+        body = r.get_data(as_text=True)
+        assert "Contact:" in body  # required field
+        assert "Expires:" in body  # required field
+        assert "Canonical:" in body
+
+    def test_csp_advertises_reporting(self, client):
+        headers = client.get("/").headers
+        assert "report-uri /csp-report" in headers["Content-Security-Policy"]
+        assert "report-to csp" in headers["Content-Security-Policy"]
+        assert headers.get("Reporting-Endpoints", "").startswith("csp=")
+
+    def test_csp_report_endpoint_accepts_without_csrf(self, client):
+        r = client.post(
+            "/csp-report",
+            data='{"csp-report":{"violated-directive":"script-src"}}',
+            content_type="application/csp-report",
+        )
+        assert r.status_code == 204  # accepted, no CSRF token needed

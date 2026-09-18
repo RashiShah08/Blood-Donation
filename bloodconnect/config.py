@@ -101,6 +101,10 @@ def build_config() -> dict:
         # Number of reverse proxies in front of the app (1 on Render); 0 when served directly.
         "TRUST_PROXY_HOPS": env_int("TRUST_PROXY_HOPS", 0),
         "ORS_API_KEY": os.getenv("ORS_API_KEY", "").strip() or None,
+        # Where security researchers should report issues (shown in /.well-known/security.txt).
+        "SECURITY_CONTACT": os.getenv(
+            "SECURITY_CONTACT", "https://github.com/RashiShah08/Blood-Donation/security/advisories/new"
+        ).strip(),
         "PUBLIC_BASE_URL": os.getenv("PUBLIC_BASE_URL", "").strip().rstrip("/") or None,
         "REQUIRE_HOSPITAL_VERIFICATION": env_bool("REQUIRE_HOSPITAL_VERIFICATION"),
         "SEARCH_RADII_KM": (2, 5, 10, 25),
