@@ -1,10 +1,13 @@
 """Email delivery and donor alerts."""
 
+import base64
 import json
 import logging
 import smtplib
 import ssl
+import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -45,6 +48,12 @@ class NotifyOutcome:
 
 
 BREVO_SEND_URL = "https://api.brevo.com/v3/smtp/email"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"  # noqa: S105 (a URL, not a secret)
+GMAIL_SEND_URL = "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
+
+
+class EmailProviderError(Exception):
+    """The email provider refused the credentials, so nothing in the batch can be sent."""
 
 
 def _post_json(url: str, payload: dict, headers: dict, timeout: int) -> int:
@@ -54,22 +63,56 @@ def _post_json(url: str, payload: dict, headers: dict, timeout: int) -> int:
         headers={**headers, "Content-Type": "application/json", "Accept": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
-        return response.status
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
+            return response.status
+    except urllib.error.HTTPError as exc:
+        # The provider's reason (for example "sender not verified") is what makes a failure fixable.
+        log.warning("Email API refused a request: HTTP %s %s", exc.code, exc.read(500).decode("utf-8", "replace"))
+        return exc.code
+
+
+def _http_request(url: str, data: bytes, headers: dict, timeout: int) -> tuple[int, dict]:
+    """POST and return the status and JSON body, including for error responses."""
+    request = urllib.request.Request(url, data=data, headers=headers, method="POST")  # noqa: S310 (fixed https URL)
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
+            status, raw = response.status, response.read()
+    except urllib.error.HTTPError as exc:
+        status, raw = exc.code, exc.read()
+    try:
+        return status, json.loads(raw or b"{}")
+    except ValueError:
+        return status, {"error": raw[:200].decode("utf-8", "replace")}
+
+
+def _google_error(body: dict) -> str:
+    error = body.get("error")
+    if isinstance(error, dict):  # Gmail API errors
+        return str(error.get("message") or error.get("status") or error)
+    return str(body.get("error_description") or error or body)
 
 
 class Mailer:
-    """Sends a batch of emails, over one SMTP connection or through Brevo's HTTPS API.
+    """Sends a batch of emails through the Gmail API, Brevo's API or one SMTP connection.
 
-    Brevo is used when BREVO_API_KEY is set, for hosts that block SMTP ports. With
-    MAIL_SUPPRESS_SEND (the default when no credentials are configured) emails are
-    logged instead of sent, so the app can be demoed without an account.
+    The first configured provider wins, in that order. The Gmail API uses a send-only OAuth
+    token, so a leaked credential can't read the mailbox. With MAIL_SUPPRESS_SEND (the default
+    when nothing is configured) emails are logged instead of sent, so the app can be demoed.
     """
 
-    def __init__(self, config: dict, smtp_factory: Callable | None = None, http_post: Callable | None = None):
+    def __init__(
+        self,
+        config: dict,
+        smtp_factory: Callable | None = None,
+        http_post: Callable | None = None,
+        gmail_http: Callable | None = None,
+    ):
         self.config = config
         self.smtp_factory = smtp_factory or self._connect
         self.http_post = http_post or _post_json
+        self.gmail_http = gmail_http or _http_request
+        self._gmail_token: tuple[str, float] | None = None  # access token and when it expires
 
     def _connect(self, host: str, port: int, timeout: int):
         context = ssl.create_default_context()
@@ -79,9 +122,9 @@ class Mailer:
         server.starttls(context=context)
         return server
 
-    def _build(self, email: OutgoingEmail) -> EmailMessage:
+    def _build(self, email: OutgoingEmail, sender: str | None = None) -> EmailMessage:
         message = EmailMessage()
-        message["From"] = formataddr((self.config["MAIL_FROM_NAME"], self.config["EMAIL_ADDRESS"]))
+        message["From"] = formataddr((self.config["MAIL_FROM_NAME"], sender or self.config["EMAIL_ADDRESS"]))
         message["To"] = email.to
         message["Subject"] = email.subject
         message.set_content(email.body)
@@ -94,6 +137,8 @@ class Mailer:
             for email in emails:
                 log.info("Email sending disabled. Would send %r:\n%s", email.subject, email.body)
             return SendReport(sent=[e.to for e in emails], simulated=True)
+        if self._gmail_api_configured():
+            return self._send_with_gmail_api(emails)
         if self.config.get("BREVO_API_KEY"):
             return self._send_with_brevo(emails)
 
@@ -134,6 +179,65 @@ class Mailer:
                 report.failed.append(email.to)
                 continue
             (report.sent if 200 <= status < 300 else report.failed).append(email.to)
+        return report
+
+    def _gmail_api_configured(self) -> bool:
+        return all(self.config.get(key) for key in ("GMAIL_CLIENT_ID", "GMAIL_CLIENT_SECRET", "GMAIL_REFRESH_TOKEN"))
+
+    def _gmail_access_token(self) -> str:
+        """A short-lived access token, reused until a minute before it expires."""
+        if self._gmail_token and self._gmail_token[1] > time.monotonic() + 60:
+            return self._gmail_token[0]
+        form = urllib.parse.urlencode(
+            {
+                "client_id": self.config["GMAIL_CLIENT_ID"],
+                "client_secret": self.config["GMAIL_CLIENT_SECRET"],
+                "refresh_token": self.config["GMAIL_REFRESH_TOKEN"],
+                "grant_type": "refresh_token",
+            }
+        ).encode("ascii")
+        status, body = self.gmail_http(
+            GOOGLE_TOKEN_URL,
+            form,
+            {"Content-Type": "application/x-www-form-urlencoded", "Accept": "application/json"},
+            self.config["SMTP_TIMEOUT_SECONDS"],
+        )
+        if status != 200 or not body.get("access_token"):
+            raise EmailProviderError(f"HTTP {status}: {_google_error(body)}")
+        self._gmail_token = (body["access_token"], time.monotonic() + int(body.get("expires_in", 3600)))
+        return self._gmail_token[0]
+
+    def _send_with_gmail_api(self, emails: list[OutgoingEmail]) -> SendReport:
+        report = SendReport()
+        timeout = self.config["SMTP_TIMEOUT_SECONDS"]
+        try:
+            token = self._gmail_access_token()
+        except (EmailProviderError, urllib.error.URLError, OSError, ValueError) as exc:
+            log.error("Google refused the Gmail API credentials, so no email was sent: %s", exc)
+            report.failed.extend(email.to for email in emails)
+            return report
+        headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+        for email in emails:
+            message = self._build(email, sender=self.config.get("GMAIL_SENDER"))
+            raw = base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")
+            try:
+                status, body = self.gmail_http(GMAIL_SEND_URL, json.dumps({"raw": raw}).encode(), headers, timeout)
+            except (urllib.error.URLError, OSError, ValueError) as exc:
+                log.warning("Gmail API could not send an email (subject %r): %s", email.subject, exc)
+                report.failed.append(email.to)
+                continue
+            if 200 <= status < 300:
+                report.sent.append(email.to)
+            else:
+                if status == 401:
+                    self._gmail_token = None  # fetch a fresh token next time
+                log.warning(
+                    "Gmail API could not send an email (subject %r): HTTP %s %s",
+                    email.subject,
+                    status,
+                    _google_error(body),
+                )
+                report.failed.append(email.to)
         return report
 
 

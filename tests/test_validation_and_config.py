@@ -202,6 +202,18 @@ class TestConfig:
         assert settings["MAIL_SUPPRESS_SEND"] is False
         assert settings["MAIL_FROM_EMAIL"] == "alerts@example.org"
 
+    def test_gmail_api_credentials_turn_on_real_sending(self, monkeypatch):
+        for name in ("EMAIL_PASSWORD", "BREVO_API_KEY", "MAIL_SUPPRESS_SEND", "GMAIL_SENDER", "GMAIL_REFRESH_TOKEN"):
+            monkeypatch.delenv(name, raising=False)
+        monkeypatch.setenv("EMAIL_ADDRESS", "bloodconnectapp@gmail.com")
+        monkeypatch.setenv("GMAIL_CLIENT_ID", "123.apps.googleusercontent.com")
+        monkeypatch.setenv("GMAIL_CLIENT_SECRET", "GOCSPX-test")
+        assert config.build_config()["MAIL_SUPPRESS_SEND"] is True  # incomplete: still demo mode
+        monkeypatch.setenv("GMAIL_REFRESH_TOKEN", "1//refresh")
+        settings = config.build_config()
+        assert settings["MAIL_SUPPRESS_SEND"] is False
+        assert settings["GMAIL_SENDER"] == "bloodconnectapp@gmail.com"  # falls back to EMAIL_ADDRESS
+
     def test_proxy_headers_are_trusted_only_when_configured(self):
         direct = create_app({"SECRET_KEY": "k", "SQLALCHEMY_DATABASE_URI": TEST_DATABASE_URL}, load_env=False)
         assert not isinstance(direct.wsgi_app, ProxyFix)

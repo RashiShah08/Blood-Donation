@@ -62,6 +62,10 @@ def build_config() -> dict:
     email_password = os.getenv("EMAIL_PASSWORD", "").strip() or None
     smtp_configured = bool(email_address and email_password)
     brevo_api_key = os.getenv("BREVO_API_KEY", "").strip() or None
+    gmail_client_id = os.getenv("GMAIL_CLIENT_ID", "").strip() or None
+    gmail_client_secret = os.getenv("GMAIL_CLIENT_SECRET", "").strip() or None
+    gmail_refresh_token = os.getenv("GMAIL_REFRESH_TOKEN", "").strip() or None
+    gmail_api_configured = bool(gmail_client_id and gmail_client_secret and gmail_refresh_token)
 
     return {
         "DEBUG": env_bool("FLASK_DEBUG"),
@@ -85,8 +89,15 @@ def build_config() -> dict:
         # Brevo sends over HTTPS, for hosts that block SMTP ports (such as Render's free tier).
         "BREVO_API_KEY": brevo_api_key,
         "MAIL_FROM_EMAIL": os.getenv("MAIL_FROM_EMAIL", "").strip() or email_address,
+        # Google's Gmail API with a send-only OAuth token (see scripts/google_gmail_token.py).
+        "GMAIL_CLIENT_ID": gmail_client_id,
+        "GMAIL_CLIENT_SECRET": gmail_client_secret,
+        "GMAIL_REFRESH_TOKEN": gmail_refresh_token,
+        "GMAIL_SENDER": os.getenv("GMAIL_SENDER", "").strip() or email_address,
         # Without email credentials, emails are logged instead of sent (demo mode).
-        "MAIL_SUPPRESS_SEND": env_bool("MAIL_SUPPRESS_SEND", default=not (smtp_configured or brevo_api_key)),
+        "MAIL_SUPPRESS_SEND": env_bool(
+            "MAIL_SUPPRESS_SEND", default=not (smtp_configured or brevo_api_key or gmail_api_configured)
+        ),
         # Number of reverse proxies in front of the app (1 on Render); 0 when served directly.
         "TRUST_PROXY_HOPS": env_int("TRUST_PROXY_HOPS", 0),
         "ORS_API_KEY": os.getenv("ORS_API_KEY", "").strip() or None,

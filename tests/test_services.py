@@ -1,9 +1,12 @@
 """Unit tests for email delivery, routing and the pledge service."""
 
+import base64
+import email
 import io
 import json
 import smtplib
 import urllib.error
+import urllib.parse
 from datetime import date
 
 import pytest
@@ -22,6 +25,15 @@ MAIL_CONFIG = {
     "EMAIL_ADDRESS": "alerts@example.com",
     "EMAIL_PASSWORD": "app-password",
     "MAIL_FROM_NAME": "BloodConnect",
+}
+
+
+GMAIL_CONFIG = {
+    **MAIL_CONFIG,
+    "GMAIL_CLIENT_ID": "123.apps.googleusercontent.com",
+    "GMAIL_CLIENT_SECRET": "GOCSPX-test",
+    "GMAIL_REFRESH_TOKEN": "1//refresh",
+    "GMAIL_SENDER": "bloodconnectapp@gmail.com",
 }
 
 
@@ -125,6 +137,79 @@ class TestMailer:
         report = Mailer(brevo, FakeSMTP(), post).send(emails("ok@example.com", "bad@example.com", "down@example.com"))
         assert report.sent == ["ok@example.com"]
         assert report.failed == ["bad@example.com", "down@example.com"]
+
+    def test_gmail_api_sends_with_one_token_per_batch(self):
+        calls = []
+
+        def google(url, data, headers, timeout):
+            calls.append((url, data, headers))
+            if url == "https://oauth2.googleapis.com/token":
+                return 200, {"access_token": "ya29.token", "expires_in": 3599}
+            return 200, {"id": "msg-1"}
+
+        smtp = FakeSMTP()
+        mailer = Mailer(GMAIL_CONFIG, smtp, gmail_http=google)
+        report = mailer.send(emails("a@example.com", "b@example.com"))
+        assert report.sent == ["a@example.com", "b@example.com"] and report.failed == []
+        assert smtp.connections == 0
+        token_calls = [call for call in calls if call[0].endswith("/token")]
+        assert len(token_calls) == 1
+        form = urllib.parse.parse_qs(token_calls[0][1].decode())
+        assert form["grant_type"] == ["refresh_token"] and form["refresh_token"] == ["1//refresh"]
+
+        send_url, body, headers = calls[1]
+        assert send_url == "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
+        assert headers["Authorization"] == "Bearer ya29.token"
+        message = email.message_from_bytes(base64.urlsafe_b64decode(json.loads(body)["raw"]))
+        assert message["From"] == "BloodConnect <bloodconnectapp@gmail.com>"
+        assert message["To"] == "a@example.com" and message["Subject"] == "Subject a@example.com"
+
+        # The access token is reused for the next batch until it is about to expire.
+        mailer.send(emails("c@example.com"))
+        assert len([call for call in calls if call[0].endswith("/token")]) == 1
+
+    def test_gmail_api_rejected_credentials_fail_the_batch_without_sending(self):
+        calls = []
+
+        def google(url, data, headers, timeout):
+            calls.append(url)
+            return 400, {"error": "invalid_grant", "error_description": "Token has been expired or revoked."}
+
+        report = Mailer(GMAIL_CONFIG, FakeSMTP(), gmail_http=google).send(emails("a@example.com", "b@example.com"))
+        assert report.sent == [] and report.failed == ["a@example.com", "b@example.com"]
+        assert calls == ["https://oauth2.googleapis.com/token"]
+
+    def test_gmail_api_failures_are_reported_per_email(self):
+        def google(url, data, headers, timeout):
+            if url.endswith("/token"):
+                return 200, {"access_token": "ya29.token", "expires_in": 3599}
+            to = email.message_from_bytes(base64.urlsafe_b64decode(json.loads(data)["raw"]))["To"]
+            if to == "down@example.com":
+                raise urllib.error.URLError("connection reset")
+            if to == "bad@example.com":
+                return 400, {"error": {"code": 400, "message": "Invalid To header"}}
+            return 200, {"id": "ok"}
+
+        report = Mailer(GMAIL_CONFIG, FakeSMTP(), gmail_http=google).send(
+            emails("ok@example.com", "bad@example.com", "down@example.com")
+        )
+        assert report.sent == ["ok@example.com"]
+        assert report.failed == ["bad@example.com", "down@example.com"]
+
+    def test_gmail_api_takes_priority_over_other_providers(self):
+        used = []
+
+        def google(url, data, headers, timeout):
+            used.append("gmail")
+            return 200, ({"access_token": "t", "expires_in": 3599} if url.endswith("/token") else {"id": "x"})
+
+        def brevo(*args):
+            used.append("brevo")
+            return 201
+
+        config = {**GMAIL_CONFIG, "BREVO_API_KEY": "xkeysib-test", "MAIL_FROM_EMAIL": "x@example.org"}
+        Mailer(config, FakeSMTP(), brevo, google).send(emails("a@example.com"))
+        assert "brevo" not in used and "gmail" in used
 
     def test_empty_batch(self):
         smtp = FakeSMTP()

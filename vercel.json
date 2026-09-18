@@ -1,10 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["sin1"],
+  "regions": [
+    "sin1"
+  ],
   "functions": {
     "app.py": {
       "maxDuration": 30,
-      "excludeFiles": "{tests/**,db/**,.github/**,**/__pycache__/**,render.yaml,docker-compose.yml,README.md}"
+      "excludeFiles": "{tests/**,scripts/**,db/**,.github/**,**/__pycache__/**,render.yaml,docker-compose.yml,README.md}"
     }
   }
 }

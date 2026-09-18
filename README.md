@@ -36,7 +36,8 @@ Built for the Ignite IT 7.0 hackathon, then rebuilt to be secure, tested and pro
 - The database connection is encrypted and its certificate verified whenever the URL asks for `sslmode=require`.
 - Strict Content Security Policy: no inline scripts, no third-party scripts or styles, Leaflet served from the repo, and no CDNs.
 - Only the server connects to PostgreSQL. The browser never talks to the database, and no database credentials reach the page.
-- API keys (Brevo, SMTP, OpenRouteService) live in environment variables on the server and never reach the browser.
+- API keys and tokens (Gmail API, Brevo, SMTP, OpenRouteService) live in environment variables on the server and never
+  reach the browser. The Gmail API token is send-only: it cannot read the mailbox.
 - Generic error messages for users, with details logged on the server.
 
 ## Tech stack
@@ -162,13 +163,23 @@ The Flask app serves both the pages and the API, so one deployment runs everythi
 |------|---------|-----------|
 | App (pages + API) | [Vercel](https://vercel.com) Hobby | 1M requests and 4 CPU-hours a month; personal, non-commercial use |
 | Database | [Neon](https://neon.com) PostgreSQL | 0.5 GB, permanent; pauses after 5 minutes idle |
-| Email alerts | [Brevo](https://www.brevo.com) HTTPS API | 300 emails a day |
+| Email alerts | [Gmail API](https://developers.google.com/workspace/gmail/api) with a send-only token | about 500 emails a day |
 
 `vercel.json` runs the app in Singapore (`sin1`), next to Neon's Singapore region, the closest to India.
 
 1. **Neon:** create a project in *AWS Asia Pacific (Singapore)*. The pooled connection string (host
    contains `-pooler`, ends in `?sslmode=require`) is the one to use.
-2. **Brevo:** create an account, verify the sender address you'll send from, and create an API key.
+2. **Gmail API** (free, official, send-only): in the [Google Cloud console](https://console.cloud.google.com)
+   create a project, enable the **Gmail API**, set up the **OAuth consent screen** (External, add the
+   `gmail.send` scope, then **Publish app** so the token doesn't expire after 7 days), and create an
+   **OAuth client ID** of type **Desktop app**. Then run, in your own terminal:
+
+   ```bash
+   python scripts/google_gmail_token.py
+   ```
+
+   It opens Google's consent page (for an unpublished-to-Google app, choose *Advanced → Go to
+   BloodConnect*) and prints the refresh token. The token can only send mail: it can't read the inbox.
 3. **Vercel:** Add New → Project → import this repository. No build settings are needed. Add these
    environment variables for Production:
 
@@ -179,7 +190,9 @@ The Flask app serves both the pages and the API, so one deployment runs everythi
    | `SESSION_COOKIE_SECURE` | `1` |
    | `TRUST_PROXY_HOPS` | `1` |
    | `REQUIRE_HOSPITAL_VERIFICATION` | `1` |
-   | `BREVO_API_KEY`, `MAIL_FROM_EMAIL` | from Brevo |
+   | `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET` | the Desktop app OAuth client |
+   | `GMAIL_REFRESH_TOKEN` | printed by `scripts/google_gmail_token.py` |
+   | `GMAIL_SENDER` | the Gmail address you authorised |
    | `PUBLIC_BASE_URL` | your `https://….vercel.app` address |
    | `ORS_API_KEY` | optional, for road directions |
 
@@ -196,8 +209,8 @@ flask --app app verify-hospital hospital@example.org
 published password.
 
 **Alternative, Render:** `render.yaml` deploys the same app as a long-running server (New → Blueprint).
-Render's free tier sleeps after 15 idle minutes (about a minute to wake) and blocks SMTP, so Brevo is
-required there too. Use Neon rather than Render's free database, which is deleted after 30 days.
+Render's free tier sleeps after 15 idle minutes (about a minute to wake) and blocks SMTP, so use the
+Gmail API (HTTPS) there too. Use Neon rather than Render's free database, which is deleted after 30 days.
 
 ## Medical note
 
