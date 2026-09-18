@@ -235,9 +235,11 @@ class TestRateLimiting:
         app = build_app(RATELIMIT_ENABLED=True, RATELIMIT_STORAGE_URI="memory://")
         with app.app_context():
             client = app.test_client()
+            # A different email each time, so the per-account lockout doesn't trigger first: this
+            # checks the per-address limit that stops one visitor trying many accounts.
             statuses = [
-                client.post("/donor/login", data={"email": "x@example.com", "password": "guess-guess"}).status_code
-                for _ in range(11)
+                client.post("/donor/login", data={"email": f"x{n}@example.com", "password": "guess-guess"}).status_code
+                for n in range(11)
             ]
             assert statuses[:10] == [401] * 10
             assert statuses[10] == 429
@@ -265,9 +267,23 @@ class TestHeadersAndErrors:
         login_donor(client, make_donor())
         assert client.get("/donor/dashboard").headers["Cache-Control"] == "no-store"
 
+    def test_cross_origin_isolation_headers(self, client):
+        headers = client.get("/").headers
+        assert headers["Cross-Origin-Opener-Policy"] == "same-origin"
+        assert headers["Cross-Origin-Resource-Policy"] == "same-origin"
+        assert "payment=()" in headers["Permissions-Policy"]
+
     def test_pages_with_a_csrf_token_are_not_cached(self, client):
         # Login pages are anonymous but carry a CSRF token, so they must not be stored either.
         assert client.get("/donor/login").headers["Cache-Control"] == "no-store"
+
+    def test_static_files_can_be_cached_by_a_cdn_even_when_logged_in(self, client, make_donor):
+        login_donor(client, make_donor())
+        response = client.get("/static/css/app.css?v=1")
+        assert "Cookie" not in response.headers.get("Vary", "")  # a CDN won't cache per-cookie responses
+        assert "Set-Cookie" not in response.headers
+        assert response.headers["CDN-Cache-Control"] == "public, max-age=31536000, immutable"
+        assert "immutable" in response.headers["Cache-Control"]
 
     def test_static_files_are_versioned_and_cacheable(self, client):
         body = client.get("/").get_data(as_text=True)
@@ -308,6 +324,9 @@ class TestHeadersAndErrors:
 
     def test_health_check(self, client):
         assert client.get("/healthz").get_json() == {"status": "ok"}
+
+    def test_readiness_check_reaches_the_database(self, client):
+        assert client.get("/readyz").get_json() == {"status": "ok", "database": "ok"}
 
 
 class TestOutputEscapingAndPrivacy:

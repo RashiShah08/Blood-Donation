@@ -15,6 +15,18 @@ def test_seed_demo_refuses_outside_debug(app):
     assert db.session.query(Hospital).count() == 0
 
 
+def test_seed_demo_refuses_a_remote_database(app):
+    # Demo accounts share a published password, so a hosted database is refused unless asked for.
+    local = app.config["SQLALCHEMY_DATABASE_URI"]
+    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql+pg8000://u:p@ep-cool-name.ap-southeast-1.aws.neon.tech/neondb"
+    try:
+        result = app.test_cli_runner().invoke(args=["seed-demo", "--force"])
+    finally:
+        app.config["SQLALCHEMY_DATABASE_URI"] = local
+    assert result.exit_code != 0 and "remote database" in result.output
+    assert db.session.query(Hospital).count() == 0
+
+
 def test_seed_demo_with_force_is_idempotent(app):
     runner = app.test_cli_runner()
     first = runner.invoke(args=["seed-demo", "--force"])

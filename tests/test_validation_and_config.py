@@ -1,10 +1,13 @@
 """Unit tests for form validation and configuration loading."""
 
+import ssl
 from datetime import date
 
 import pytest
+from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 
-from bloodconnect import config, create_app
+from bloodconnect import _configure_database, config, create_app
 from bloodconnect.validation import FormValidator
 from tests.conftest import TEST_DATABASE_URL, dispose
 
@@ -159,6 +162,65 @@ class TestConfig:
         app = create_app({"SECRET_KEY": "k", "SQLALCHEMY_DATABASE_URI": TEST_DATABASE_URL}, load_env=False)
         assert app.config["SQLALCHEMY_DATABASE_URI"].startswith("postgresql+pg8000://")
         dispose(app)
+
+    @pytest.mark.parametrize(
+        "url, expected_url, tls",
+        [
+            (
+                "postgresql+pg8000://u:p@ep-x.neon.tech/db?sslmode=require&channel_binding=require",
+                "postgresql+pg8000://u:p@ep-x.neon.tech/db",
+                True,
+            ),
+            ("postgresql+pg8000://u:p@h/db?sslmode=disable", "postgresql+pg8000://u:p@h/db", False),
+            (
+                "postgresql+pg8000://u:p@h/db?application_name=bc",
+                "postgresql+pg8000://u:p@h/db?application_name=bc",
+                False,
+            ),
+            ("postgresql+pg8000://u:p@h/db", "postgresql+pg8000://u:p@h/db", False),
+        ],
+    )
+    def test_libpq_tls_options_are_translated_for_pg8000(self, url, expected_url, tls):
+        assert config.split_tls_options(url) == (expected_url, tls)
+
+    def test_hosted_database_url_turns_on_tls(self):
+        app = Flask("tls-test")
+        app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://u:p@ep-x.neon.tech/db?sslmode=require"
+        app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
+        _configure_database(app)
+        assert app.config["SQLALCHEMY_DATABASE_URI"] == "postgresql+pg8000://u:p@ep-x.neon.tech/db"
+        options = app.config["SQLALCHEMY_ENGINE_OPTIONS"]
+        assert options["pool_pre_ping"] is True
+        assert isinstance(options["connect_args"]["ssl_context"], ssl.SSLContext)
+
+    def test_brevo_key_turns_on_real_sending(self, monkeypatch):
+        for name in ("EMAIL_ADDRESS", "EMAIL_PASSWORD", "MAIL_SUPPRESS_SEND", "MAIL_FROM_EMAIL"):
+            monkeypatch.delenv(name, raising=False)
+        monkeypatch.setenv("BREVO_API_KEY", "xkeysib-test")
+        monkeypatch.setenv("MAIL_FROM_EMAIL", "alerts@example.org")
+        settings = config.build_config()
+        assert settings["MAIL_SUPPRESS_SEND"] is False
+        assert settings["MAIL_FROM_EMAIL"] == "alerts@example.org"
+
+    def test_proxy_headers_are_trusted_only_when_configured(self):
+        direct = create_app({"SECRET_KEY": "k", "SQLALCHEMY_DATABASE_URI": TEST_DATABASE_URL}, load_env=False)
+        assert not isinstance(direct.wsgi_app, ProxyFix)
+        dispose(direct)
+        proxied = create_app(
+            {"SECRET_KEY": "k", "SQLALCHEMY_DATABASE_URI": TEST_DATABASE_URL, "TRUST_PROXY_HOPS": 1}, load_env=False
+        )
+        assert isinstance(proxied.wsgi_app, ProxyFix)
+        with proxied.test_request_context(
+            "/", headers={"X-Forwarded-Proto": "https", "X-Forwarded-Host": "bc.example"}
+        ):
+            from flask import request
+
+            assert request.url_root == "http://localhost/"  # test contexts bypass WSGI middleware
+        response = proxied.test_client().get(
+            "/donor/login", headers={"X-Forwarded-Proto": "https", "X-Forwarded-Host": "bc.example"}
+        )
+        assert response.status_code == 200
+        dispose(proxied)
 
     def test_debug_is_off_by_default(self, monkeypatch):
         monkeypatch.delenv("FLASK_DEBUG", raising=False)

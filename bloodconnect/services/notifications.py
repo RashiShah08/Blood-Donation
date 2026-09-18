@@ -1,8 +1,11 @@
 """Email delivery and donor alerts."""
 
+import json
 import logging
 import smtplib
 import ssl
+import urllib.error
+import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from email.message import EmailMessage
@@ -41,16 +44,32 @@ class NotifyOutcome:
         return self.sent > 0 and self.failed == 0
 
 
-class Mailer:
-    """Sends a batch of emails over one SMTP connection.
+BREVO_SEND_URL = "https://api.brevo.com/v3/smtp/email"
 
-    With MAIL_SUPPRESS_SEND (the default when no SMTP credentials are configured)
-    emails are logged instead of sent, so the app can be demoed without an account.
+
+def _post_json(url: str, payload: dict, headers: dict, timeout: int) -> int:
+    request = urllib.request.Request(  # noqa: S310 (fixed https URL)
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={**headers, "Content-Type": "application/json", "Accept": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:  # noqa: S310
+        return response.status
+
+
+class Mailer:
+    """Sends a batch of emails, over one SMTP connection or through Brevo's HTTPS API.
+
+    Brevo is used when BREVO_API_KEY is set, for hosts that block SMTP ports. With
+    MAIL_SUPPRESS_SEND (the default when no credentials are configured) emails are
+    logged instead of sent, so the app can be demoed without an account.
     """
 
-    def __init__(self, config: dict, smtp_factory: Callable | None = None):
+    def __init__(self, config: dict, smtp_factory: Callable | None = None, http_post: Callable | None = None):
         self.config = config
         self.smtp_factory = smtp_factory or self._connect
+        self.http_post = http_post or _post_json
 
     def _connect(self, host: str, port: int, timeout: int):
         context = ssl.create_default_context()
@@ -75,6 +94,8 @@ class Mailer:
             for email in emails:
                 log.info("Email sending disabled. Would send %r:\n%s", email.subject, email.body)
             return SendReport(sent=[e.to for e in emails], simulated=True)
+        if self.config.get("BREVO_API_KEY"):
+            return self._send_with_brevo(emails)
 
         report = SendReport()
         try:
@@ -93,6 +114,26 @@ class Mailer:
             log.exception("SMTP connection failed")
             done = set(report.sent) | set(report.failed)
             report.failed.extend(e.to for e in emails if e.to not in done)
+        return report
+
+    def _send_with_brevo(self, emails: list[OutgoingEmail]) -> SendReport:
+        report = SendReport()
+        sender = {"name": self.config["MAIL_FROM_NAME"], "email": self.config["MAIL_FROM_EMAIL"]}
+        headers = {"api-key": self.config["BREVO_API_KEY"]}
+        for email in emails:
+            payload = {
+                "sender": sender,
+                "to": [{"email": email.to}],
+                "subject": email.subject,
+                "textContent": email.body,
+            }
+            try:
+                status = self.http_post(BREVO_SEND_URL, payload, headers, self.config["SMTP_TIMEOUT_SECONDS"])
+            except (urllib.error.URLError, OSError, ValueError) as exc:
+                log.warning("Brevo could not send an email (subject %r): %s", email.subject, exc)
+                report.failed.append(email.to)
+                continue
+            (report.sent if 200 <= status < 300 else report.failed).append(email.to)
         return report
 
 

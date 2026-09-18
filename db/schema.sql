@@ -98,3 +98,11 @@ create table if not exists notifications (
 );
 create index if not exists ix_notifications_request_id on notifications (request_id);
 create index if not exists ix_notifications_donor_id on notifications (donor_id);
+
+-- Failed logins per account email, shared by every app process (serverless hosts run several).
+create table if not exists login_throttles (
+    key                varchar(64) primary key,  -- sha256 of "kind:email"
+    failures           integer not null default 0,
+    window_started_at  timestamp not null default (now() at time zone 'utc'),
+    locked_until       timestamp
+);

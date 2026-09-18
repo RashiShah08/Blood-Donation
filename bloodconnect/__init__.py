@@ -2,13 +2,15 @@
 
 import logging
 import secrets
+import ssl
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, request
+from werkzeug.middleware.proxy_fix import ProxyFix
 
-from .config import build_config, normalize_database_url
+from .config import build_config, normalize_database_url, split_tls_options
 from .domain.blood import BLOOD_GROUPS
 from .extensions import csrf, db, limiter
 from .security import init_security
@@ -25,6 +27,7 @@ def create_app(overrides: dict | None = None, *, load_env: bool = True) -> Flask
     if overrides:
         app.config.update(overrides)
 
+    _configure_proxy(app)
     _configure_static_caching(app)
     _configure_logging(app)
     _ensure_secret_key(app)
@@ -63,10 +66,24 @@ def _configure_database(app: Flask) -> None:
             "DATABASE_URL is not set. Start PostgreSQL (`docker compose up -d`) and add "
             "DATABASE_URL=postgresql://bloodconnect:bloodconnect@127.0.0.1:5432/bloodconnect to .env."
         )
-    url = normalize_database_url(url)
+    url, require_tls = split_tls_options(normalize_database_url(url))
     if not url.startswith("postgresql+"):
         raise RuntimeError("BloodConnect requires PostgreSQL: DATABASE_URL must start with postgresql://")
     app.config["SQLALCHEMY_DATABASE_URI"] = url
+    if require_tls:
+        options = dict(app.config.get("SQLALCHEMY_ENGINE_OPTIONS") or {})
+        connect_args = dict(options.get("connect_args") or {})
+        connect_args.setdefault("ssl_context", ssl.create_default_context())
+        options["connect_args"] = connect_args
+        app.config["SQLALCHEMY_ENGINE_OPTIONS"] = options
+
+
+def _configure_proxy(app: Flask) -> None:
+    """Behind a hosting proxy, trust its X-Forwarded-* headers so URLs use https and rate limits
+    see the visitor's address instead of the proxy's."""
+    hops = app.config.get("TRUST_PROXY_HOPS") or 0
+    if hops > 0:
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=hops, x_proto=hops, x_host=hops)
 
 
 def _configure_static_caching(app: Flask) -> None:
@@ -88,6 +105,14 @@ def _configure_static_caching(app: Flask) -> None:
             except OSError:
                 return
         values["v"] = versions[filename]
+
+    @app.after_request
+    def cache_static_files_at_the_edge(response):
+        # Versioned URLs never change content, so CDNs (Vercel's included) may keep them for a year.
+        if request.endpoint == "static" and response.status_code == 200:
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+            response.headers["CDN-Cache-Control"] = "public, max-age=31536000, immutable"
+        return response
 
 
 def _configure_logging(app: Flask) -> None:

@@ -4,6 +4,7 @@ from functools import wraps
 from urllib.parse import urlsplit
 
 from flask import Flask, g, jsonify, redirect, request, session, url_for
+from flask.sessions import SecureCookieSessionInterface
 
 from .extensions import db
 from .models import Donor, Hospital
@@ -71,10 +72,27 @@ donor_required = _login_required(DONOR, "auth.donor_login")
 hospital_required = _login_required(HOSPITAL, "auth.hospital_login")
 
 
+class StaticAwareSessionInterface(SecureCookieSessionInterface):
+    """Leave static file responses alone.
+
+    Flask re-sends a permanent session's cookie on every response, and a CDN never caches a response
+    that sets a cookie, so CSS, JavaScript and fonts would always come from the app instead of the edge.
+    """
+
+    def save_session(self, app, session, response):
+        if request.endpoint == "static":
+            return
+        super().save_session(app, session, response)
+
+
 def init_security(app: Flask) -> None:
+    app.session_interface = StaticAwareSessionInterface()
+
     @app.before_request
     def load_account():
         g.donor = g.hospital = None
+        if request.endpoint == "static":
+            return  # reading the session would add "Vary: Cookie" and stop the CDN caching assets
         kind, account_id = session.get("account_kind"), session.get("account_id")
         if kind == DONOR:
             g.donor = db.session.get(Donor, account_id)
@@ -90,7 +108,10 @@ def init_security(app: Flask) -> None:
         headers.setdefault("X-Content-Type-Options", "nosniff")
         headers.setdefault("X-Frame-Options", "DENY")
         headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
-        headers.setdefault("Permissions-Policy", "geolocation=(self), camera=(), microphone=()")
+        headers.setdefault("Permissions-Policy", "geolocation=(self), camera=(), microphone=(), payment=()")
+        # Isolate the page from other sites' windows and stop other sites embedding our files.
+        headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
+        headers.setdefault("Cross-Origin-Resource-Policy", "same-origin")
         if app.config.get("SESSION_COOKIE_SECURE"):
             headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
         # Pages are personal or carry a CSRF token; only static files are cacheable.

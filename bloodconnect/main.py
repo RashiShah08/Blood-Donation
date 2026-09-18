@@ -82,8 +82,15 @@ def privacy():
 
 @bp.get("/healthz")
 def health():
-    db.session.execute(text("SELECT 1"))
+    # Liveness only: hosting platforms call this every few seconds, and a database query here
+    # would keep a scale-to-zero database awake around the clock.
     return jsonify(status="ok")
+
+
+@bp.get("/readyz")
+def ready():
+    db.session.execute(text("SELECT 1"))
+    return jsonify(status="ok", database="ok")
 
 
 # Old URLs from the first version of the site, kept working with permanent redirects.

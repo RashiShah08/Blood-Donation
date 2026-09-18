@@ -28,7 +28,7 @@ TEST_DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",
     "postgresql://bloodconnect:bloodconnect@127.0.0.1:5432/bloodconnect_test",
 )
-TABLES = "notifications, pledges, blood_requests, donors, hospitals"
+TABLES = "login_throttles, notifications, pledges, blood_requests, donors, hospitals"
 
 TEST_CONFIG = {
     "TESTING": True,

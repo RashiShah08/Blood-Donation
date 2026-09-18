@@ -12,6 +12,7 @@ from .domain.blood import BLOOD_GROUPS, recipient_groups_for
 from .domain.eligibility import MIN_AGE_YEARS, age_on
 from .extensions import db, limiter
 from .models import GENDERS, HEALTH_ISSUES, HOSPITAL_TYPES, Donor, Hospital
+from .services import throttle
 from .services.notifications import password_reset_email
 from .validation import FormValidator
 
@@ -48,12 +49,21 @@ def _login(kind: str):
 
     email = request.form.get("email", "").strip().lower()
     password = request.form.get("password", "")
+    wait = throttle.minutes_locked(kind, email) if email else 0
+    if wait:
+        error = (
+            f"Too many failed attempts. Try again in {wait} minute{'s' if wait != 1 else ''}, or reset your password."
+        )
+        return render_template(template, email=email, error=error), 429
     account = db.session.scalar(select(model).where(func.lower(model.email) == email)) if email else None
     if account is None:
         check_password_hash(_DUMMY_HASH, password)
     elif account.check_password(password):
+        throttle.clear(kind, email)
         security.login(kind, account.id)
         return _redirect_after_login(kind)
+    if email:
+        throttle.record_failure(kind, email)
     return render_template(template, email=email, error="Incorrect email or password."), 401
 
 
@@ -237,5 +247,6 @@ def reset_password(kind: str, token: str):
         return render_template("auth/reset_password.html", kind=kind, token=token, errors=v.errors), 422
     account.set_password(v.data["password"])
     db.session.commit()
+    throttle.clear(kind, account.email)  # a successful reset lifts any lockout
     flash("Your password has been updated. Please log in.", "success")
     return redirect(url_for(LOGIN_ENDPOINTS[kind]))

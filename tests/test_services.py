@@ -92,6 +92,40 @@ class TestMailer:
         assert report.simulated and report.sent == ["a@example.com"]
         assert smtp.connections == 0
 
+    def test_brevo_sends_each_email_over_https(self):
+        calls = []
+
+        def post(url, payload, headers, timeout):
+            calls.append((url, payload, headers, timeout))
+            return 201
+
+        brevo = {**MAIL_CONFIG, "BREVO_API_KEY": "xkeysib-test", "MAIL_FROM_EMAIL": "alerts@example.org"}
+        smtp = FakeSMTP()
+        report = Mailer(brevo, smtp, post).send(emails("a@example.com", "b@example.com"))
+        assert report.sent == ["a@example.com", "b@example.com"] and report.failed == []
+        assert smtp.connections == 0  # SMTP is never used when Brevo is configured
+        url, payload, headers, timeout = calls[0]
+        assert url == "https://api.brevo.com/v3/smtp/email"
+        assert headers == {"api-key": "xkeysib-test"} and timeout == 5
+        assert payload == {
+            "sender": {"name": "BloodConnect", "email": "alerts@example.org"},
+            "to": [{"email": "a@example.com"}],
+            "subject": "Subject a@example.com",
+            "textContent": "Body",
+        }
+
+    def test_brevo_failures_are_reported_per_email(self):
+        def post(url, payload, headers, timeout):
+            recipient = payload["to"][0]["email"]
+            if recipient == "down@example.com":
+                raise urllib.error.URLError("connection refused")
+            return 400 if recipient == "bad@example.com" else 201
+
+        brevo = {**MAIL_CONFIG, "BREVO_API_KEY": "xkeysib-test", "MAIL_FROM_EMAIL": "alerts@example.org"}
+        report = Mailer(brevo, FakeSMTP(), post).send(emails("ok@example.com", "bad@example.com", "down@example.com"))
+        assert report.sent == ["ok@example.com"]
+        assert report.failed == ["bad@example.com", "down@example.com"]
+
     def test_empty_batch(self):
         smtp = FakeSMTP()
         assert Mailer(MAIL_CONFIG, smtp).send([]).sent == []

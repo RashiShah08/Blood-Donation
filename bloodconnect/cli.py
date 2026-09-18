@@ -5,6 +5,7 @@ from datetime import date, timedelta
 import click
 from flask import Flask, current_app
 from sqlalchemy import select
+from sqlalchemy.engine import make_url
 
 from .extensions import db
 from .models import BloodRequest, Donor, Hospital
@@ -37,10 +38,18 @@ def register_cli(app: Flask) -> None:
 
     @app.cli.command("seed-demo")
     @click.option("--force", is_flag=True, help="Allow seeding when FLASK_DEBUG is off.")
-    def seed_demo(force: bool):
+    @click.option("--allow-remote-database", is_flag=True, help="Allow seeding a database that isn't on this machine.")
+    def seed_demo(force: bool, allow_remote_database: bool):
         """Add demo hospitals, donors and one open request."""
         if not current_app.debug and not force:
             raise click.ClickException("Refusing to add demo accounts outside debug mode (use --force).")
+        # Demo accounts share one published password: never put them on a public database by accident.
+        host = make_url(current_app.config["SQLALCHEMY_DATABASE_URI"]).host or ""
+        if host not in {"127.0.0.1", "localhost", "::1"} and not allow_remote_database:
+            raise click.ClickException(
+                f"Refusing to add demo accounts to the remote database at {host}: they share a published "
+                "password. Use --allow-remote-database only for a private demo."
+            )
         if db.session.scalar(select(Hospital).where(Hospital.email == DEMO_HOSPITALS[0][1])):
             click.echo("Demo data already exists.")
             return

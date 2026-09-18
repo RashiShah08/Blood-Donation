@@ -1,13 +1,14 @@
 """Integration tests for registration, login, logout and password reset."""
 
 import re
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 import pytest
 
 from bloodconnect import auth
 from bloodconnect.extensions import db
 from bloodconnect.models import Donor, Hospital
+from bloodconnect.services import throttle
 from tests.conftest import DONOR_PASSWORD, HOSPITAL_PASSWORD, login_donor, login_hospital
 
 
@@ -255,3 +256,68 @@ class TestPasswordReset:
         response = client.post(link, data={"password": "short", "confirm_password": "short"})
         assert response.status_code == 422
         assert login_hospital(client, hospital, HOSPITAL_PASSWORD).status_code == 302
+
+
+class TestLoginLockout:
+    """Failed logins are counted in the database, so the lockout holds across app processes."""
+
+    def test_five_failures_lock_the_login_even_with_the_right_password(self, client, make_donor):
+        donor = make_donor()
+        for _ in range(throttle.MAX_FAILURES):
+            assert login_donor(client, donor, password="wrong-password").status_code == 401
+        response = login_donor(client, donor)
+        assert response.status_code == 429
+        assert "Too many failed attempts" in response.get_data(as_text=True)
+        assert client.get("/donor/dashboard").status_code == 302  # still logged out
+
+    def test_unknown_emails_lock_the_same_way(self, client):
+        # Same behaviour for registered and unregistered emails: a lockout reveals nothing.
+        for _ in range(throttle.MAX_FAILURES):
+            response = client.post("/donor/login", data={"email": "nobody@example.com", "password": "x"})
+            assert response.status_code == 401
+        response = client.post("/donor/login", data={"email": "nobody@example.com", "password": "x"})
+        assert response.status_code == 429
+
+    def test_lockouts_are_per_account_kind_and_email(self, client, make_donor):
+        locked, other = make_donor(), make_donor()
+        for _ in range(throttle.MAX_FAILURES):
+            login_donor(client, locked, password="wrong-password")
+        assert login_donor(client, other).status_code == 302
+        client.post("/logout")
+        # The hospital login with the same email is a different account and isn't locked.
+        response = client.post("/hospital/login", data={"email": locked.email, "password": "x"})
+        assert response.status_code == 401
+
+    def test_success_clears_earlier_failures(self, client, make_donor):
+        donor = make_donor()
+        for _ in range(throttle.MAX_FAILURES - 1):
+            login_donor(client, donor, password="wrong-password")
+        assert login_donor(client, donor).status_code == 302
+        client.post("/logout")
+        for _ in range(throttle.MAX_FAILURES - 1):
+            login_donor(client, donor, password="wrong-password")
+        assert login_donor(client, donor).status_code == 302  # the count started again from zero
+
+    def test_lock_expires_and_old_failures_are_forgotten(self, app, make_donor):
+        donor = make_donor()
+        start = datetime(2026, 9, 1, 12, 0)
+        for minute in range(throttle.MAX_FAILURES):
+            throttle.record_failure("donor", donor.email, now=start + timedelta(minutes=minute))
+        assert throttle.minutes_locked("donor", donor.email, now=start + timedelta(minutes=5)) == 14
+        assert throttle.minutes_locked("donor", donor.email, now=start + timedelta(minutes=20)) == 0
+        # A failure after the window has passed starts a fresh count instead of re-locking.
+        throttle.record_failure("donor", donor.email, now=start + timedelta(minutes=40))
+        assert throttle.minutes_locked("donor", donor.email, now=start + timedelta(minutes=40)) == 0
+
+    def test_password_reset_lifts_the_lock(self, client, app, make_donor):
+        donor = make_donor()
+        for _ in range(throttle.MAX_FAILURES):
+            login_donor(client, donor, password="wrong-password")
+        with app.test_request_context():
+            token = auth._reset_serializer().dumps({"kind": "donor", "id": donor.id, "fp": auth._fingerprint(donor)})
+        response = client.post(
+            f"/donor/reset-password/{token}",
+            data={"password": "brand-new-pass-1", "confirm_password": "brand-new-pass-1"},
+        )
+        assert response.status_code == 302
+        assert login_donor(client, donor, password="brand-new-pass-1").status_code == 302

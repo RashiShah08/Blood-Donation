@@ -2,6 +2,7 @@
 
 import os
 from datetime import timedelta
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 # Values copied straight from .env.example must never be used as a real secret.
 PLACEHOLDER_SECRETS = {"", "replace_with_a_long_random_string", "change-me"}
@@ -36,12 +37,31 @@ def normalize_database_url(url: str) -> str:
     return url
 
 
+# libpq connection options that pg8000 does not understand; TLS is configured separately.
+LIBPQ_ONLY_OPTIONS = {"sslmode", "channel_binding"}
+TLS_SSLMODES = {"require", "verify-ca", "verify-full"}
+
+
+def split_tls_options(url: str) -> tuple[str, bool]:
+    """Remove libpq-only query options from a database URL and report whether TLS is required.
+
+    Hosted PostgreSQL (for example Neon) hands out URLs ending in ?sslmode=require. pg8000
+    rejects that option, so it is removed here and TLS is switched on through the driver.
+    """
+    parts = urlsplit(url)
+    query = parse_qsl(parts.query, keep_blank_values=True)
+    sslmode = next((value for key, value in query if key == "sslmode"), "")
+    kept = [(key, value) for key, value in query if key not in LIBPQ_ONLY_OPTIONS]
+    return urlunsplit(parts._replace(query=urlencode(kept))), sslmode.lower() in TLS_SSLMODES
+
+
 def build_config() -> dict:
     database_url = os.getenv("DATABASE_URL", "").strip()
     secret_key = os.getenv("FLASK_SECRET_KEY", "").strip()
     email_address = os.getenv("EMAIL_ADDRESS", "").strip() or None
     email_password = os.getenv("EMAIL_PASSWORD", "").strip() or None
     smtp_configured = bool(email_address and email_password)
+    brevo_api_key = os.getenv("BREVO_API_KEY", "").strip() or None
 
     return {
         "DEBUG": env_bool("FLASK_DEBUG"),
@@ -62,8 +82,13 @@ def build_config() -> dict:
         "EMAIL_ADDRESS": email_address,
         "EMAIL_PASSWORD": email_password,
         "MAIL_FROM_NAME": os.getenv("MAIL_FROM_NAME", "BloodConnect").strip(),
-        # Without SMTP credentials emails are logged instead of sent (demo mode).
-        "MAIL_SUPPRESS_SEND": env_bool("MAIL_SUPPRESS_SEND", default=not smtp_configured),
+        # Brevo sends over HTTPS, for hosts that block SMTP ports (such as Render's free tier).
+        "BREVO_API_KEY": brevo_api_key,
+        "MAIL_FROM_EMAIL": os.getenv("MAIL_FROM_EMAIL", "").strip() or email_address,
+        # Without email credentials, emails are logged instead of sent (demo mode).
+        "MAIL_SUPPRESS_SEND": env_bool("MAIL_SUPPRESS_SEND", default=not (smtp_configured or brevo_api_key)),
+        # Number of reverse proxies in front of the app (1 on Render); 0 when served directly.
+        "TRUST_PROXY_HOPS": env_int("TRUST_PROXY_HOPS", 0),
         "ORS_API_KEY": os.getenv("ORS_API_KEY", "").strip() or None,
         "PUBLIC_BASE_URL": os.getenv("PUBLIC_BASE_URL", "").strip().rstrip("/") or None,
         "REQUIRE_HOSPITAL_VERIFICATION": env_bool("REQUIRE_HOSPITAL_VERIFICATION"),

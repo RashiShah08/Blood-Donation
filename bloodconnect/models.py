@@ -168,6 +168,17 @@ class Pledge(db.Model):
         return self.status in ACTIVE_PLEDGE_STATUSES
 
 
+class LoginThrottle(db.Model):
+    """Failed logins for one account email, shared by every app process (see services/throttle.py)."""
+
+    __tablename__ = "login_throttles"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)  # sha256 of "kind:email"
+    failures: Mapped[int] = mapped_column(default=0)
+    window_started_at: Mapped[datetime] = mapped_column(default=utcnow)
+    locked_until: Mapped[datetime | None]
+
+
 class Notification(db.Model):
     """One alert email per donor per request, so donors are never spammed."""
 
