@@ -32,3 +32,6 @@ Thumbs.db
 
 # OAuth client files downloaded from Google Cloud (contain the client secret)
 client_secret*.json
+
+# Security assessment — keep local, do not publish in a public repo
+docs/security-review.md
